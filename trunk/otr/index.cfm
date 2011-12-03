@@ -46,11 +46,11 @@
 <cfif qDBInstances.RecordCount IS 0>
 	<cflocation url="/otr/otr_setup.cfm" addtoken="no" />
 </cfif>
-
+<cfset dummy = SetLocale("#Application.locale_string#") />
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
-	<title><cfoutput>#application.company#</cfoutput> - Oracle Tablespace Report</title>
+	<title><cfoutput>#Application.company#</cfoutput> - Oracle Tablespace Report</title>
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
 <!--
@@ -126,7 +126,7 @@ $(document).ready(function() {
 <cfinclude template="_top_menu.cfm">
 <br />
 <div align="center">
-<h2><cfoutput>#application.company#</cfoutput> - Oracle Tablespace Report</h2>
+<h2><cfoutput>#Application.company#</cfoutput> - Oracle Tablespace Report</h2>
 <table border="0" width="980" cellpadding="10">
 <tr>
 	<td class="bodyline" align="center" valign="top">
@@ -137,7 +137,7 @@ $(document).ready(function() {
 			<td align="right" width="200">Report Date:</td>
 			<td>
 				<select name="rep_date"><cfoutput query="qRepDate">
-				<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#">#DateFormat(qRepDate.rep_date,"dd.mm.yyyy")#</option>
+				<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#">#LSDateFormat(qRepDate.rep_date,'short')#</option>
 				</cfoutput></select>
 			</td>
 		</tr>
@@ -205,23 +205,6 @@ $(document).ready(function() {
 <tr>
 	<td align="center" colspan="2" style="font-size: 8pt; text-align: center;">
 <cfinclude template="_footer.cfm" />
-		<!---
-		<cfdbinfo datasource="#application.datasource#" name="dbdata" type="dbnames">
-		<cfdbinfo datasource="#application.datasource#" name="dbdata2" type="tables">
-		<cfdbinfo datasource="#application.datasource#" name="dbdata3" type="columns" table="OTR_CUST">
-		<br />
-		<cfoutput query="dbdata">
-		#dbdata.DATABASE_NAME# - #dbdata.TYPE#<br />
-		</cfoutput>
-		<hr>
-		<cfoutput query="dbdata2">
-		<cfif dbdata2.table_type IS "TABLE">#dbdata2.TABLE_NAME# - #dbdata2.table_type#<br /></cfif>
-		</cfoutput>
-		<hr>
-		<cfoutput query="dbdata3">
-		#dbdata3.COLUMN_NAME# - #dbdata3.type_name# #dbdata3.COLUMN_SIZE#<br />
-		</cfoutput>
-		--->
 	</td>
 </tr>
 </table>
