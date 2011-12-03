@@ -29,9 +29,9 @@
 
 <cfquery name="qRepClient" datasource="#application.datasource#">
 	select cust_id, cust_name 
-	from otr_cust 
-	where cust_id = '#URL.cust_id#'
-	order by cust_name
+	  from otr_cust 
+	 where cust_id = '#URL.cust_id#'
+	 order by cust_name
 </cfquery>
 
 <cfsetting enablecfoutputonly="false">
@@ -98,7 +98,7 @@ function showDiv() {
 	<table border="0" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold; text-align: right">Company ID:&nbsp;</td>
-		<td width="150"><input type="text" name="cust_id" id="cust_id" value="#Trim(qRepClient.cust_id)#" size="3"></td>
+		<td width="150"><input type="text" name="cust_id" id="cust_id" value="#Trim(qRepClient.cust_id)#" size="3" onChange="javascript:this.value=this.value.toUpperCase();"></td>
 	</tr>
 	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Name of Company:&nbsp;</td>
