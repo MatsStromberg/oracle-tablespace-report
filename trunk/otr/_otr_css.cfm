@@ -123,5 +123,5 @@ countDownObj.count(i);
 <cfif cDirSep IS "/">
 	<cfset sHost = "#Application.obd_host#" />
 <cfelse>
-	<cfset sHost = "Application.obd_desktop_host" />
+	<cfset sHost = "#Application.obd_desktop_host#" />
 </cfif>
