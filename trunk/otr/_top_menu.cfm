@@ -46,6 +46,6 @@
 </tr>
 </table>
 <div id="loaderDiv" class="hideMe">&nbsp;</div>
-<div id="halgeDiv" class="hideMe">&nbsp;<div align="center" class="halgeHeading">No manually generated Snapshots on Fridays! <div id="countDown"></div></div></div>
+<div id="halgeDiv" class="hideMe">&nbsp;<div align="center" class="halgeHeading">No manually generated Snapshots on <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>! <div id="countDown"></div></div></div>
 <iframe frameborder="0" name="snapshot" id="snapshot" src="" width="0" height="0" scrolling="NO"></iframe>
 <br />
