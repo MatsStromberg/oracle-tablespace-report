@@ -28,16 +28,16 @@
 
 <cfquery name="qInstances" datasource="#Application.datasource#">
 	select db.db_name, db.system_password  
-	from otr_db db
-	order by db_name
+	  from otr_db db
+	 order by db_name
 </cfquery>
 
 <cfquery name="qAlarm" datasource="#Application.datasource#">
     select tablespace_name, max_mb_free, prc
-    from otr_tbs_space_rep_v
-    where prc > 98
-    and max_mb_free < 1800
-    order by prc DESC
+      from otr_tbs_space_rep_v
+     where prc > #Application.tablespace.prc_used#
+       and max_mb_free < #Application.tablespace.mb_left#
+     order by prc DESC
 </cfquery>
 
 <cfsetting enablecfoutputonly="false">
@@ -132,8 +132,8 @@ function confirmation(txt, url) {
 			            FROM dba_free_space
 			        GROUP BY tablespace_name) b
 			 WHERE a.tablespace_name = b.tablespace_name(+)
-			   AND ROUND(((a.maxbytes - a.BYTES) + NVL(b.BYTES, 0)) / 1024 / 1024, 2) < 1800
-			   AND ROUND(((a.maxbytes - ((a.maxbytes - a.BYTES) + NVL (b.BYTES, 0))) / a.maxbytes) * 100, 2) > 98
+			   AND ROUND(((a.maxbytes - a.BYTES) + NVL(b.BYTES, 0)) / 1024 / 1024, 2) < #Application.tablespace.mb_left#
+			   AND ROUND(((a.maxbytes - ((a.maxbytes - a.BYTES) + NVL (b.BYTES, 0))) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
 			ORDER BY ((a.BYTES - NVL (b.BYTES, 0)) / a.BYTES) DESC
 		</cfquery>
 		<cfcatch type="Database">
