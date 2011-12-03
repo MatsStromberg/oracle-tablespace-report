@@ -80,9 +80,12 @@
 		--->
 		<!--- Set Locale --->
 		<cfset Application.locale_string = "German (Switzerland)" />
-		<cfset dummy = SetLocale("#application.locale_string#") />
+		<cfset dummy = SetLocale("#Application.locale_string#") />
 		<!--- Password Hash Key --->
 		<cfset Application.system_pw_hash = "otrrep$system$hash" />
+		<!--- Tablespace Warning Levels --->
+		<cfset Application.tablespace.prc_used = 98 />
+		<cfset Application.tablespace.mb_left = 1800 />
 	</cffunction>
 
 </cfcomponent>
