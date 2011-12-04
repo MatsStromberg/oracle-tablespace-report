@@ -30,25 +30,35 @@
 <cfset sTemplatePath = GetDirectoryfrompath(GetBasetemplatePath()) />
 <!--- Does the file exist ? If not it's a new Setup --->
 <cfif cDirSep IS "/">
-	<cfset sFileCheck = #application.ogc_external_table# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
+	<cfset sFileCheck = #Application.ogc_external_table# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
 <cfelse>
 	<cfset sFileCheck = #sTemplatePath# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
 </cfif>
 <!--- Create a new OTR_CUST_APPL_TBS_XT.DAT if it doesn't exists --->
 <cfif NOT FileExists(sFileCheck)>
-	<cfquery name="qAllDBs" datasource="#application.datasource#">
+	<cfquery name="qAllDBs" datasource="#Application.datasource#">
 		select * from otr_db
-		order by db_name
+		 order by db_name
+	</cfquery>
+	<cfset sCustID = "" />
+	<cfquery name="qGetCustomer" datasource="#Application.datasource#">
+		select cust_id from otr_cust
+		 order by cust_id
+	</cfquery>
+	<cfoutput query="qGetCustomer">
+		<cfif sCustID IS "">
+			<cfset sCustID = Trim(qGetCustomer.cust_id) />
+		</cfif>
 	</cfquery>
 	<!--- Change the file extention from .xls to .tmp and generate the CSV File --->
 	<cfset oFile = FileOpen(ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL"),"write")>
 	<cfoutput query="qAllDBs">
-		<cfif Trim(qAllDBs.db_name) IS NOT ""><cfset sDummy = FileWriteline(oFile, "XXX;#Trim(qAllDBs.db_desc)#;#Trim(qAllDBs.db_name)#;NOT DEFINED")></cfif>
+		<cfif Trim(qAllDBs.db_name) IS NOT ""><cfset sDummy = FileWriteline(oFile, "#Trim(sCustID)#;#Trim(qAllDBs.db_desc)#;#Trim(qAllDBs.db_name)#;NOT DEFINED")></cfif>
 	</cfoutput>
 	<cfset bDummy = FileClose(oFile)>
 	<!--- Make sure the file is in UNIX Format --->
-	<cfif cDirSep IS "/"><cfexecute name="#application.UXdos2unix#" arguments="#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#" timeout="10"></cfexecute></cfif>
-	<cfif cDirSep IS "\"><cfexecute name="#application.WINdos2unix#" arguments="#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#" timeout="10"></cfexecute></cfif>
+	<cfif cDirSep IS "/"><cfexecute name="#Application.UXdos2unix#" arguments="#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#" timeout="10"></cfexecute></cfif>
+	<cfif cDirSep IS "\"><cfexecute name="#Application.WINdos2unix#" arguments="#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#" timeout="10"></cfexecute></cfif>
 	<!--- Use SFTP to transfer the, uploaded or generated from .xls, CSV File under user Oracle and with extention .DAT
 	      This is used as an External Table in Oracle. --->
 	<cfscript>
@@ -58,7 +68,7 @@
 
 	    fsManager = CreateObject("java", "org.apache.commons.vfs.VFS").getManager(); 
 
-	    uri = "sftp://#Application.sftpUser#:#Application.sftpPass#@#Application.sftpHost##application.ogc_external_table#/OTR_CUST_APPL_TBS_XT.DAT"; 
+	    uri = "sftp://#Application.sftpUser#:#Application.sftpPass#@#Application.sftpHost##Application.ogc_external_table#/OTR_CUST_APPL_TBS_XT.DAT"; 
 
 	    fo = fsManager.resolveFile(uri, fso); 
 	    lfo = fsManager.resolveFile("#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#"); 
@@ -76,12 +86,12 @@
 	
 </cfif>
 <cfif cDirSep IS "/">
-	<cfset sFile = FileRead('#application.ogc_external_table##cDirSep#OTR_CUST_APPL_TBS_XT.DAT') />
+	<cfset sFile = FileRead('#Application.ogc_external_table##cDirSep#OTR_CUST_APPL_TBS_XT.DAT') />
 <cfelse>
 	<cfset sFile = FileRead('#sTemplatePath##cDirSep#OTR_CUST_APPL_TBS_XT.DAT') />
 </cfif>
 <!--- <cfset qParFile = csvread( string=sFile, headerline=False,delimiter=";") /> --->
-<cfquery name="qParFile" datasource="#application.datasource#">
+<cfquery name="qParFile" datasource="#Application.datasource#">
 	select * from otr_cust_appl_tbs_xt
 </cfquery>
 <!--- <cfset qParFile = csvread=args> --->
@@ -102,16 +112,16 @@
 	<!--- <cfset bDummy = SpreadsheetWrite (xlsTBSobj, '#sPath##cDirSep#otr_cust_tbs.xls', true) /> --->
 	<!--- Meta Info --->
 	<cfset stInfo = StructNew()>
-	<cfset bDummy = StructInsert(stInfo, "author", "#application.excel_doc_info_author#") />
+	<cfset bDummy = StructInsert(stInfo, "author", "#Application.excel_doc_info_author#") />
 	<cfset bDummy = StructInsert(stInfo, "category", "") />
-	<cfset bDummy = StructInsert(stInfo, "subject", "#application.excel_doc_info_subject#") />
-	<cfset bDummy = StructInsert(stInfo, "title", "#application.excel_doc_info_title#") />
+	<cfset bDummy = StructInsert(stInfo, "subject", "#Application.excel_doc_info_subject#") />
+	<cfset bDummy = StructInsert(stInfo, "title", "#Application.excel_doc_info_title#") />
 	<cfset bDummy = StructInsert(stInfo, "revision", "") />
 	<cfset bDummy = StructInsert(stInfo, "description", "") />
 	<cfset bDummy = StructInsert(stInfo, "manager", "") />
-	<cfset bDummy = StructInsert(stInfo, "company", "#application.company#") />
+	<cfset bDummy = StructInsert(stInfo, "company", "#Application.company#") />
 	<cfset bDummy = StructInsert(stInfo, "comments", "") />
-	<cfset bDummy = StructInsert(stInfo, "lastauthor", "#application.excel_doc_info_lastauthor#") />
+	<cfset bDummy = StructInsert(stInfo, "lastauthor", "#Application.excel_doc_info_lastauthor#") />
 	<!---<cfdump var="#stInfo#">--->
 	<cfset bDummy = SpreadsheetAddinfo(xlsTBSobj, stInfo) />
 	<!---
@@ -127,7 +137,7 @@
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
-	<title><cfoutput>#application.company#</cfoutput> - Oracle Customer/App/Tablespace</title>
+	<title><cfoutput>#Application.company#</cfoutput> - Oracle Customer/App/Tablespace</title>
 <link rel="stylesheet" href="JScripts/jQuery/jquery.tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
@@ -190,7 +200,7 @@ function confirmation(txt, url) {
 <cfinclude template="_top_menu.cfm">
 <div align="center">
 <!--- <cfoutput>#sTemplatePath#</cfoutput><br /> --->
-<h2><cfoutput>#application.company#</cfoutput> - Oracle Customer/App/Tablespace</h2>
+<h2><cfoutput>#Application.company#</cfoutput> - Oracle Customer/App/Tablespace</h2>
 <div align="center">
 <a href="otr_tbs_csv.cfm" class="ogctip" title="<div align='center'>Save info as a CSV File.</div>" target="csv"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result as CSV</a> - <a href="excel/otr_cust_tbs.xls" class="ogctip" title="<div align='center'>Save info as an Excel File.</div>" target="_new"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result to Excel</a> - <a href="otr_tbs_upload.cfm" class="ogctip" title="<div align='center'>Upload Tablespace Info from<br />an Excel or a CSV File.</div>"><img src="images/file.gif" alt="" width="18" height="18" border="0">&nbsp;Upload a new CSV or XLS</a><br>
 <table border="0" cellpadding="5">
