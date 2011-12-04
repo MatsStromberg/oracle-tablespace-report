@@ -25,20 +25,34 @@
     <http://www.gnu.org/licenses/>.
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
-
+<!--- Customers available? --->
 <cfquery name="qRepClient" datasource="#Application.datasource#">
 	select cust_id, cust_name 
-	from otr_cust 
-	order by cust_name
+	  from otr_cust 
+	 order by cust_name
 </cfquery>
-
+<!--- Instances available ? --->
 <cfquery name="qDBInstances" datasource="#Application.datasource#">
 	select db_name
-	from otr_db
+	  from otr_db
 </cfquery>
 
+<cfset cDirSep = FileSeparator() />
+<cfset sPath = ExpandPath('/') />
+<cfset sTemplatePath = GetDirectoryfrompath(GetBasetemplatePath()) />
+<cfset bNoTablespace = 0 />
+<!--- Does the file exist ? If not it's a new Setup --->
+<cfif cDirSep IS "/">
+	<cfset sFileCheck = #Application.ogc_external_table# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
+<cfelse>
+	<cfset sFileCheck = #sTemplatePath# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
+</cfif>
+<!--- Create a new OTR_CUST_APPL_TBS_XT.DAT if it doesn't exists --->
+<cfif NOT FileExists(sFileCheck)>
+	<cfset bNoTablespace = 1 />
+</cfif>
 <!--- atleast one DB-Instance and one Customer exists --->
-<cfif qRepClient.RecordCount IS NOT 0 AND qDBInstances.RecordCount IS NOT 0>
+<cfif qRepClient.RecordCount IS NOT 0 AND qDBInstances.RecordCount IS NOT 0 AND bNoTablespace IS 0>
 	<cflocation url="/otr/index.cfm" addtoken="no" />
 </cfif>
 <cfsetting enablecfoutputonly="false">
@@ -71,6 +85,11 @@
 			<li>2. <a href="otr_setup_cust.cfm" onfocus="this.blur();">Create atleast 1 customer (Your self)</a></li>
 		<cfelse>
 			<li>2. Create atleast 1 customer (Your self)</li>
+		</cfif>
+		<cfif bNoTablespace IS 1>
+			<li>3. <a href="otr_setup_ext.cfm" onfocus="this.blur();">Create the external table source</a></li>
+		<cfelse>
+			<li>3. Create the external table source</li>
 		</cfif>
 		</ul>
 				</td>
