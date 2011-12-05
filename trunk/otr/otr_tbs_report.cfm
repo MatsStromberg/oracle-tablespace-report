@@ -406,8 +406,8 @@ function submitForm() {
 <cfoutput query="qReportLinks"><a href="###qReportLinks.db_name#" onFocus="this.blur();">#qReportLinks.db_name#</a> </cfoutput>
 </div>
 <div align="center">
-<a href="excel/customer_report.xls" target="_blank">customer_report.xls&nbsp;<img src="images/xls.png" alt="" width="16" height="16" border="0"></a>
-<cfoutput><a href="otr_tbs_report_pdf.cfm?rep_date=#FORM.rep_date#<cfif IsDefined("FORM.development")>&development=#FORM.development#</cfif><cfif IsDefined("FORM.internal")>&internal=#FORM.internal#</cfif><cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">&rep_cust=#FORM.rep_cust#</cfif>" target="_blank">as PDF <img src="images/pdficon_small.gif" alt="" width="17" height="17" border="0"></a></cfoutput>
+<a href="excel/customer_report.xls" target="_blank" class="ogctip" title="<div align='center'>Save output as an<br />Excel Document</div>">customer_report.xls&nbsp;<img src="images/xls.png" alt="" width="16" height="16" border="0"></a>
+<cfoutput><a href="otr_tbs_report_pdf.cfm?rep_date=#FORM.rep_date#<cfif IsDefined("FORM.development")>&development=#FORM.development#</cfif><cfif IsDefined("FORM.internal")>&internal=#FORM.internal#</cfif><cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">&rep_cust=#FORM.rep_cust#</cfif>" target="_blank" class="ogctip" title="<div align='center'>Save output as a<br />PDF Document</div>">as PDF&nbsp;<img src="images/pdficon_small.gif" alt="" width="17" height="17" border="0"></a></cfoutput>
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">
