@@ -406,8 +406,8 @@ function submitForm() {
 <cfoutput query="qReportLinks"><a href="###qReportLinks.db_name#" onFocus="this.blur();">#qReportLinks.db_name#</a> </cfoutput>
 </div>
 <div align="center">
-<a href="excel/customer_report.xls" target="_blank" class="ogctip" title="<div align='center'>Save output as an<br />Excel Document</div>">customer_report.xls&nbsp;<img src="images/xls.png" alt="" width="16" height="16" border="0"></a>
-<cfoutput><a href="otr_tbs_report_pdf.cfm?rep_date=#FORM.rep_date#<cfif IsDefined("FORM.development")>&development=#FORM.development#</cfif><cfif IsDefined("FORM.internal")>&internal=#FORM.internal#</cfif><cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">&rep_cust=#FORM.rep_cust#</cfif>" target="_blank" class="ogctip" title="<div align='center'>Save output as a<br />PDF Document</div>">as PDF&nbsp;<img src="images/pdficon_small.gif" alt="" width="17" height="17" border="0"></a></cfoutput>
+<a href="excel/customer_report.xls" target="_blank" class="otrtip" title="<div align='center'>Save output as an<br />Excel Document</div>">customer_report.xls&nbsp;<img src="images/xls.png" alt="" width="16" height="16" border="0"></a>
+<cfoutput><a href="otr_tbs_report_pdf.cfm?rep_date=#FORM.rep_date#<cfif IsDefined("FORM.development")>&development=#FORM.development#</cfif><cfif IsDefined("FORM.internal")>&internal=#FORM.internal#</cfif><cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">&rep_cust=#FORM.rep_cust#</cfif>" target="_blank" class="otrtip" title="<div align='center'>Save output as a<br />PDF Document</div>">as PDF&nbsp;<img src="images/pdficon_small.gif" alt="" width="17" height="17" border="0"></a></cfoutput>
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">
@@ -435,8 +435,8 @@ function submitForm() {
 	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_free_mb,"999,999.99")#</td>
 	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_can_grow_mb,"999,999")#<cfset nSubCanGrowToSum = nSubCanGrowToSum + qReport.db_tbs_can_grow_mb /></td>
 	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_max_free_mb,"999,999.99")#</td>
-	<td width="120" align="right" class="ogctip" title="#LsNumberFormat(qReport.db_tbs_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_prc_used),"999")# %</td>
-	<td width="120" align="right" class="ogctip" title="#LsNumberFormat(qReport.db_tbs_real_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_real_prc_used),"999")# %</td>
+	<td width="120" align="right" class="otrtip" title="#LsNumberFormat(qReport.db_tbs_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_prc_used),"999")# %</td>
+	<td width="120" align="right" class="otrtip" title="#LsNumberFormat(qReport.db_tbs_real_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_real_prc_used),"999")# %</td>
 </tr></cfoutput>
 <tr>
 	<td align="right">Sub Total (MB):</td>
@@ -458,7 +458,7 @@ function submitForm() {
 </tr>
 <cfoutput query="qNFSreport"><tr>
 	<td align="left">NFS Server: <strong>#qNFSreport.nfs_server#</strong></td>
-	<td align="left" colspan="2"<cfif qNFSReport.filesystem CONTAINS 'SnapManager'> class="ogctip" title="#qNFSreport.filesystem#" style="cursor:help; color: rgb(124,43,66);"<cfset bSMO = 1 /></cfif>>Mount: #qNFSreport.mountpoint#</td>
+	<td align="left" colspan="2"<cfif qNFSReport.filesystem CONTAINS 'SnapManager'> class="otrtip" title="#qNFSreport.filesystem#" style="cursor:help; color: rgb(124,43,66);"<cfset bSMO = 1 /></cfif>>Mount: #qNFSreport.mountpoint#</td>
 	<td align="right">#LSNumberFormat(qNFSreport.nfs_mb_total,"999,999")#<cfset nfsSubSum = nfsSubSum + qNFSreport.nfs_mb_total /></td>
 	<td align="right">#LSNumberFormat(qNFSreport.nfs_mb_free,"999,999")#<cfset nfsSubFreeSum = nfsSubFreeSum + qNFSreport.nfs_mb_free /></td>
 	<td align="right">#LsNumberFormat(round(qNFSreport.nfs_prc_used),"999")# %</td>

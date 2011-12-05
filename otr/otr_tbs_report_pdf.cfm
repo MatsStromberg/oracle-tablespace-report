@@ -1,4 +1,4 @@
-<cfdocument format="pdf"> <!-- filename="/tmp/pdftest.pdf" overwrite="true"> -->
+<cfdocument format="pdf" pagetype="A4"> <!-- filename="/tmp/pdftest.pdf" overwrite="true"> -->
 <!---
     Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
     
@@ -127,8 +127,8 @@
 	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_free_mb,"999,999.99")#</td>
 	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_can_grow_mb,"999,999")#<cfset nSubCanGrowToSum = nSubCanGrowToSum + qReport.db_tbs_can_grow_mb /></td>
 	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_max_free_mb,"999,999.99")#</td>
-	<td width="120" align="right" class="ogctip" title="#LsNumberFormat(qReport.db_tbs_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_prc_used),"999")# %</td>
-	<td width="120" align="right" class="ogctip" title="#LsNumberFormat(qReport.db_tbs_real_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_real_prc_used),"999")# %</td>
+	<td width="120" align="right" class="otrtip" title="#LsNumberFormat(qReport.db_tbs_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_prc_used),"999")# %</td>
+	<td width="120" align="right" class="otrtip" title="#LsNumberFormat(qReport.db_tbs_real_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_real_prc_used),"999")# %</td>
 </tr></cfoutput>
 <tr>
 	<td align="right">Sub Total (MB):</td>
@@ -150,7 +150,7 @@
 </tr>
 <cfoutput query="qNFSreport"><tr>
 	<td align="left">NFS Server: <strong>#qNFSreport.nfs_server#</strong></td>
-	<td align="left" colspan="2"<cfif qNFSReport.filesystem CONTAINS 'SnapManager'> class="ogctip" title="#qNFSreport.filesystem#" style="cursor:help; color: rgb(124,43,66);"<cfset bSMO = 1 /></cfif>>Mount: #qNFSreport.mountpoint#</td>
+	<td align="left" colspan="2"<cfif qNFSReport.filesystem CONTAINS 'SnapManager'> class="otrtip" title="#qNFSreport.filesystem#" style="cursor:help; color: rgb(124,43,66);"<cfset bSMO = 1 /></cfif>>Mount: #qNFSreport.mountpoint#</td>
 	<td align="right">#LSNumberFormat(qNFSreport.nfs_mb_total,"999,999")#<cfset nfsSubSum = nfsSubSum + qNFSreport.nfs_mb_total /></td>
 	<td align="right">#LSNumberFormat(qNFSreport.nfs_mb_free,"999,999")#<cfset nfsSubFreeSum = nfsSubFreeSum + qNFSreport.nfs_mb_free /></td>
 	<td align="right">#LsNumberFormat(round(qNFSreport.nfs_prc_used),"999")# %</td>

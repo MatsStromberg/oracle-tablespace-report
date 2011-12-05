@@ -41,7 +41,7 @@
 	<td align="center" valign="top" width="100">&nbsp;</td>
 	<td align="center" valign="top" width="100">&nbsp;</td>
 	<td align="center" valign="top" width="100">&nbsp;</td>
-	<td align="center" valign="top" width="100"><a href="<cfoutput>#application.ogc_logon_url#</cfoutput>" target="_blank" class="ogctip" title="<div align='center'>This is a direct<br />Link to the<br />Oracle GridControl</div>" onfocus="this.blur();">GridControl</a></td>
+	<td align="center" valign="top" width="100"><a href="<cfoutput>#application.ogc_logon_url#</cfoutput>" target="_blank" class="otrtip" title="<div align='center'>This is a direct<br />Link to the<br />Oracle GridControl</div>" onfocus="this.blur();">GridControl</a></td>
 	<td align="right" style="font-size: 8pt; font-weight: bold; color: rgb(124,43,66);"><img src="images/<cfoutput>#application.logo_image#</cfoutput>" alt="" width="186" height="45" border="0"></td>
 </tr>
 </table>

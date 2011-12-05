@@ -140,7 +140,7 @@ function chartBugLinux(){
 	</td>
 	<td align="right" width="150">1 snapshot / Month:</td>
 	<td width="50">
-		<input type="checkbox" name="monthly" id="monthly" value="1" onclick="toggle_select();" class="ogctip" title="<div align='center'>Select this to just see<br />one snapshot / month for<br />the selected year</div>">
+		<input type="checkbox" name="monthly" id="monthly" value="1" onclick="toggle_select();" class="otrtip" title="<div align='center'>Select this to just see<br />one snapshot / month for<br />the selected year</div>">
 	</td>
 	<td align="right" width="20">Year:</td>
 	<td width="100">

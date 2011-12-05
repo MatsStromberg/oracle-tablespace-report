@@ -127,7 +127,7 @@ function confirmation(txt, url) {
 	<cfoutput query="qInstances"><tr<cfif qInstances.CurrentRow mod 2> class="alternate"</cfif>>
 		<td>#qInstances.db_name#</td>
 		<td>#qInstances.db_desc#</td>
-		<td class="ogctip" title="<cfif qInstances.db_env IS "SEE">Shared Enterprise Edition<cfelseif qInstances.db_env IS "DEE">Dedicated Enterprise Edition<cfelseif qInstances.db_env IS "DEV">Development Enterprise Edition<cfelseif qInstances.db_env IS "INT">Internal Enterprise Edition<cfelse>Shared Enterprise Edition</cfif>" style="cursor: help; text-align: center;">#qInstances.db_env#</td>
+		<td class="otrtip" title="<cfif qInstances.db_env IS "SEE">Shared Enterprise Edition<cfelseif qInstances.db_env IS "DEE">Dedicated Enterprise Edition<cfelseif qInstances.db_env IS "DEV">Development Enterprise Edition<cfelseif qInstances.db_env IS "INT">Internal Enterprise Edition<cfelse>Shared Enterprise Edition</cfif>" style="cursor: help; text-align: center;">#qInstances.db_env#</td>
 		<td><cfif Trim(qInstances.system_password) NEQ "">**********</cfif></td>
 		<td><cfif Trim(qInstances.system_password) NEQ ""><iframe src="otr_system_test.cfm?SID=#qInstances.db_name#" name="pwtest" id="pwtest" width="30" height="20" marginwidth="0" marginheight="0" scrolling="no" frameborder="0"></iframe><cfelse>&nbsp;</cfif></td>
 		<td align="center"><a href="otr_db_edit.cfm?db_name=#qInstances.db_name#"><img src="images/btn_edit.gif" alt="Edit" title="Edit" width="24" height="20" border="0"></a></td>
