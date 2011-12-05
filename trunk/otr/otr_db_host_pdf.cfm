@@ -24,23 +24,20 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<cfquery name="qHostInstances" datasource="#application.datasource#">
+<cfquery name="qHostInstances" datasource="#Application.datasource#">
 	select distinct a.hostname db_host, a.db_name, a.rep_date
 	from otrrep.otr_nfs_space_rep a, otrrep.otr_space_rep_max_timestamp_v b
 	where TRUNC(a.rep_date) = b.rep_date 
 	order by rep_date desc, hostname, db_name
 </cfquery>
 
-<cfquery name="getDate" datasource="#application.datasource#">
+<cfquery name="getDate" datasource="#Application.datasource#">
 	select rep_date from otrrep.otr_space_rep_max_timestamp_v
 </cfquery>
 
-<cfset pdf_date = DateFormat(getDate.rep_date, 'dd-mm-yyyy') />
-<cfscript>
-	logger(msg="Start PDF #pdf_date#", level="info");
-</cfscript>
+<cfset pdf_date = DateFormat(getDate.rep_date, 'yyyymmdd') />
 <!--- Define Date Format --->
-<cfset dummy = SetLocale("#application.locale_string#") />
+<cfset dummy = SetLocale("#Application.locale_string#") />
 <cfdocument format="pdf" filename="#application.host_instance_pdf_dir#dbhosts_instances_#pdf_date#.pdf" overwrite="yes" pagetype="A4">
 <style>
   table {
@@ -82,8 +79,4 @@
 	</table>
 </cfdocumentsection>
 </cfdocument>
-<cfexecute name="/bin/chown" arguments="pccr:dba /opt/pro/dir/ccr/oracle/dbhosts_instances_#pdf_date#.pdf" />
-<cfscript>
-	logger(msg="End PDF #pdf_date#", level="info");
-</cfscript>
-
+<!--- <cfexecute name="/bin/chown" arguments="pccr:dba /opt/pro/dir/ccr/oracle/dbhosts_instances_#pdf_date#.pdf" /> --->
