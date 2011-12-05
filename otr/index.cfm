@@ -137,7 +137,7 @@ $(document).ready(function() {
 			<td align="right" width="200">Report Date:</td>
 			<td>
 				<select name="rep_date"><cfoutput query="qRepDate">
-				<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#">#LSDateFormat(qRepDate.rep_date,'short')#</option>
+				<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#">#LSDateFormat(qRepDate.rep_date,'medium')#</option>
 				</cfoutput></select>
 			</td>
 		</tr>
