@@ -81,7 +81,7 @@ function confirmation(txt, url) {
 			and   b.property_name = 'Port'
 		</cfquery>
 
-		<!--- Get Listener Port --->
+		<!--- Get Host server --->
 		<cfquery name="qHost" datasource="OTR_SYSMAN">
 			select distinct b.property_value
 			from mgmt_target_properties a, mgmt_target_properties b
