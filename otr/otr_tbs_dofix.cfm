@@ -37,15 +37,24 @@
 <!--- Get Listener Port --->
 <cfquery name="qPort" datasource="OTR_SYSMAN">
 	select distinct b.property_value
-	from mgmt_target_properties a, mgmt_target_properties b
-	where a.target_guid = b.target_guid
-	and   a.property_value = '#Trim(oraSID)#'
-	and   b.property_name = 'Port';
+	  from mgmt_target_properties a, mgmt_target_properties b
+	 where a.target_guid = b.target_guid
+	   and   a.property_value = '#Trim(oraSID)#'
+	   and   b.property_name = 'Port';
+</cfquery>
+
+<!--- Get Host server --->
+<cfquery name="qHost" datasource="OTR_SYSMAN">
+	select distinct b.property_value
+	  from mgmt_target_properties a, mgmt_target_properties b
+	 where a.target_guid = b.target_guid
+	   and   a.property_value = '#Trim(qInstances.db_name)#'
+	   and   b.property_name = 'MachineName'
 </cfquery>
 
 <!--- Create Temporary Data Source --->
 <cfset s = StructNew()>
-<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(oraSID)#.mbczh.ch:#qPort.property_value#:#UCase(oraSID)#">
+<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHost.property_value)#:#qPort.property_value#:#UCase(oraSID)#">
 <cfset s.drivername   = "oracle.jdbc.OracleDriver">
 <cfset s.databasename = "#UCase(oraSID)#">
 <cfset s.username     = "system">
