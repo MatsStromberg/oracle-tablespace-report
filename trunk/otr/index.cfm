@@ -42,7 +42,7 @@
 	select db_name
 	from otr_db
 </cfquery>
-
+<!--- New Setup? If so, we'll do some basic Database updates. --->
 <cfif qDBInstances.RecordCount IS 0>
 	<cflocation url="/otr/otr_setup.cfm" addtoken="no" />
 </cfif>
