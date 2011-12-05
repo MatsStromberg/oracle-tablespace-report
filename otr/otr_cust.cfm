@@ -123,7 +123,7 @@ function confirmation(txt, url) {
 	</thead>
 	<tfoot>
 	<tr>
-		<th width="100" style="font-size: 11pt;font-weight: bold;">Company</th>
+		<th width="100" style="font-size: 11pt;font-weight: bold;">Company ID</th>
 		<th width="300" style="font-size: 11pt;font-weight: bold;">Company name</th>
 		<td align="center" width="50" style="font-size: 9pt;font-weight: bold;">Edit</td>
 		<td align="center" width="50" style="font-size: 9pt;font-weight: bold;">Delete</td>
