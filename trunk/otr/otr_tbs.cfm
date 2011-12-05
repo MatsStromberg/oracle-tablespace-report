@@ -202,7 +202,7 @@ function confirmation(txt, url) {
 <!--- <cfoutput>#sTemplatePath#</cfoutput><br /> --->
 <h2><cfoutput>#Application.company#</cfoutput> - Oracle Customer/App/Tablespace</h2>
 <div align="center">
-<a href="otr_tbs_csv.cfm" class="ogctip" title="<div align='center'>Save info as a CSV File.</div>" target="csv"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result as CSV</a> - <a href="excel/otr_cust_tbs.xls" class="ogctip" title="<div align='center'>Save info as an Excel File.</div>" target="_new"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result to Excel</a> - <a href="otr_tbs_upload.cfm" class="ogctip" title="<div align='center'>Upload Tablespace Info from<br />an Excel or a CSV File.</div>"><img src="images/file.gif" alt="" width="18" height="18" border="0">&nbsp;Upload a new CSV or XLS</a><br>
+<a href="otr_tbs_csv.cfm" class="otrtip" title="<div align='center'>Save info as a CSV File.</div>" target="csv"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result as CSV</a> - <a href="excel/otr_cust_tbs.xls" class="otrtip" title="<div align='center'>Save info as an Excel File.</div>" target="_new"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result to Excel</a> - <a href="otr_tbs_upload.cfm" class="otrtip" title="<div align='center'>Upload Tablespace Info from<br />an Excel or a CSV File.</div>"><img src="images/file.gif" alt="" width="18" height="18" border="0">&nbsp;Upload a new CSV or XLS</a><br>
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">

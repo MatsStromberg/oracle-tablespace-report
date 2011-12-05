@@ -199,7 +199,7 @@ $(document).ready(function() {
 	the Status column.<br />
 	<br />
 	<!--- <input type="button" name="bAll" value="ALL">--->
-	<a href="javascript:void(0);" class="ogctip" title="<div align='center'>Display Status of all<br />Oracle Instances</div>" onclick="setAllTBS();">All</a> | <a href="javascript:void(0);" class="ogctip" title="<div align='center'>Display Status of<br />Oracle Instances<br />with a problem</div>" onclick="setCurrTBS();">Trouble</a>
+	<a href="javascript:void(0);" class="otrtip" title="<div align='center'>Display Status of all<br />Oracle Instances</div>" onclick="setAllTBS();">All</a> | <a href="javascript:void(0);" class="otrtip" title="<div align='center'>Display Status of<br />Oracle Instances<br />with a problem</div>" onclick="setCurrTBS();">Trouble</a>
 	</td>
 </tr>
 <tr>

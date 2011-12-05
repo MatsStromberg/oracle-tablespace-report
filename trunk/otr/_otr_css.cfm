@@ -45,7 +45,7 @@
 <script type="text/javascript">
 <!--
 $(document).ready(function(){
-	$(".ogctip").tipTip({
+	$(".otrtip").tipTip({
 		maxWidth: "auto",
 		edgeOffset: 10,
 		delay: 100
