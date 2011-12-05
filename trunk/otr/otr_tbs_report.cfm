@@ -407,7 +407,7 @@ function submitForm() {
 </div>
 <div align="center">
 <a href="excel/customer_report.xls" target="_blank">customer_report.xls&nbsp;<img src="images/xls.png" alt="" width="16" height="16" border="0"></a>
-<cfoutput><a href="otr_tbs_report_pdf.cfm?rep_date=#FORM.rep_date#<cfif IsDefined("FORM.development")>&development=#FORM.development#</cfif><cfif IsDefined("FORM.internal")>&internal=#FORM.internal#</cfif><cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">&rep_cust=#FORM.rep_cust#</cfif>" target="_blank">as PDF</a></cfoutput>
+<cfoutput><a href="otr_tbs_report_pdf.cfm?rep_date=#FORM.rep_date#<cfif IsDefined("FORM.development")>&development=#FORM.development#</cfif><cfif IsDefined("FORM.internal")>&internal=#FORM.internal#</cfif><cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">&rep_cust=#FORM.rep_cust#</cfif>" target="_blank">as PDF <img src="images/pdficon_small.gif" alt="" width="17" height="17" border="0"></a></cfoutput>
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">
