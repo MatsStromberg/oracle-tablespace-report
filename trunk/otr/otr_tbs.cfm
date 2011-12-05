@@ -49,7 +49,7 @@
 		<cfif sCustID IS "">
 			<cfset sCustID = Trim(qGetCustomer.cust_id) />
 		</cfif>
-	</cfquery>
+	</cfoutput>
 	<!--- Change the file extention from .xls to .tmp and generate the CSV File --->
 	<cfset oFile = FileOpen(ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL"),"write")>
 	<cfoutput query="qAllDBs">
