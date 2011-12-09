@@ -64,7 +64,7 @@
 		<cfset Application.obd_desktop_host = "http://localhost/" />
 		<cfset Application.logo_image = "OTR_logo.gif" />
 		<cfset Application.ogc_logon_url = "http://minerva:4889/em/console/logon/logon" />
-		<cfset Application.ogc_external_table = "/orascripts/scripts/monitoring/xt/OGC2ICB" />
+		<cfset Application.ogc_external_table = "/orascripts/scripts/monitoring/xt/OTR" />
 		<cfset Application.host_instance_pdf_dir = "/opt/pro/dir/ccr/oracle/" />
 		<!--- SFTP Settings for the host of the GridControl Repository --->
 		<cfset Application.sftpHost = "minerva.mbczh.ch">
