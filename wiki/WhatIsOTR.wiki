@@ -43,4 +43,4 @@ Givs a detailed report of the tablespaces for each Instance / Customer.
 === Tablespace Growth Trends ===
 http://www.network23.net/otr/images/wiki/tablespace-trends.png
 
-Gives a graphical output showing the growth of tablespaces over a period. This can help to plan the storage needs.
+Gives a graphical output showing the growth of tablespaces over a period. This can help to plan the physical storage needs.
