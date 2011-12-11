@@ -1,4 +1,3 @@
-#Installing the OTR from Subversion
 
 = Introduction =
 
