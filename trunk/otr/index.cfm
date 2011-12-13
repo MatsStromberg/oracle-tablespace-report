@@ -25,12 +25,16 @@
     <http://www.gnu.org/licenses/>.
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
-
+<cftry>
 <cfquery name="qRepDate" datasource="#Application.datasource#">
 	select rep_date 
 	  from otr_space_rep_timestamps_v 
 	order by rep_date desc
 </cfquery>
+	<cfcatch type="Database">
+		<cflocation url="/bluedragon/administrator/index.cfm" addtoken="No" />
+	</cfcatch>
+</cftry>
 
 <cfquery name="qRepClient" datasource="#Application.datasource#">
 	select cust_id, cust_name 
