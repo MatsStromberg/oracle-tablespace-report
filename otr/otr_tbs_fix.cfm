@@ -172,7 +172,7 @@ function confirmation(txt, url) {
 	<table border="0" cellpadding="0" cellspacing="0">
 	<tr>
 		<td>
-			<div align="center" style="text-align: center; font-weight: bold; font-size:14pt;"><cfoutput>#oraTBS#</cfoutput></div>
+			<div align="center" style="text-align: center; font-weight: bold; font-size:14pt;"><cfoutput>(#oraSID#) #oraTBS#</cfoutput></div>
 			<cfif qTBSinfo.bigfile IS "YES">
 				<table border="0" cellpadding="2" cellspacing="5">
 				<tr>
