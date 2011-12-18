@@ -60,8 +60,8 @@
 		<!--- Snapshot Day / Sunday = 1 --->
 		<cfset Application.snapshot_day = 6 /><!--- 6 = Friday --->
 		<!--- General Application Settings --->
-		<cfset Application.obd_host = "http://minerva/" />
-		<cfset Application.obd_desktop_host = "http://localhost/" />
+		<cfset Application.obd_host = "http://minerva:8080/" />
+		<cfset Application.obd_desktop_host = "http://localhost:8080/" />
 		<cfset Application.logo_image = "OTR_logo.gif" />
 		<cfset Application.ogc_logon_url = "http://minerva:4889/em/console/logon/logon" />
 		<cfset Application.ogc_external_table = "/orascripts/scripts/monitoring/xt/OTR" />
