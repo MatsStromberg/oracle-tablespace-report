@@ -29,6 +29,7 @@
 	from otr_space_rep_max_timestamp_v 
 	order by rep_date desc
 </cfquery>
+<cfset dummy = SetLocale("English (United States)")>
 <cfsetting enablecfoutputonly="false" /><a name="top"></a><table border="0" width="100%">
 <table border="0" width="100%">
 <tr>
@@ -42,7 +43,7 @@
 	<td align="center" valign="top" width="100"><a href="otr_tbs_deletesnapshot.cfm" class="otrtip" title="<div align='center'>Delete a specific snapshot.<br />You can not delete <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput> snapshots</div>" onfocus="this.blur();">Del Snapshot</a></td>
 	<td align="center" valign="top" width="100"><a href="<cfoutput>#application.ogc_logon_url#</cfoutput>" target="_blank" class="otrtip" title="<div align='center'>This is a direct<br />Link to the Oracle<br />Enterprise Manager</div>" onfocus="this.blur();">Enterprise Manager</a></td>
 	<!---<td align="center" valign="top" width="200">Last Snapshot: <cfoutput>#DateFormat(qRepDateMax.rep_date, "dd.mm.yyyy")#</cfoutput></td>--->
-	<td align="right" style="font-size: 8pt; font-weight: bold; color: rgb(124,43,66);"><img src="images/<cfoutput>#application.logo_image#</cfoutput>" alt="" width="186" height="45" border="0"><br />Last Snapshot: <cfoutput>#LSDateFormat(qRepDateMax.rep_date, 'medium')#</cfoutput></td>
+	<td align="right" style="font-size: 8pt; font-weight: bold; color: rgb(124,43,66);"><cfset dummy = SetLocale("#Application.locale_string#") /><img src="images/<cfoutput>#application.logo_image#</cfoutput>" alt="" width="186" height="45" border="0"><br />Last Snapshot: <cfoutput>#LSDateFormat(qRepDateMax.rep_date, 'medium')#</cfoutput></td>
 </tr>
 </table>
 <div id="loaderDiv" class="hideMe">&nbsp;</div>
