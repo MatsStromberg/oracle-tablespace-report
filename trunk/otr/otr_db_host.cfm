@@ -130,7 +130,7 @@ function confirmation(txt, url) {
 		<td style="font-size: 8pt;font-weight: normal;font-style: oblique">Number of Instances: <cfoutput>#qHostInstances.RecordCount#, Stand of #dRepDate#</cfoutput></td>
 	</tr>
 	<tr>
-		<td style="font-size: 8pt;font-weight: normal;">Weekly PDF's are stored under /opt/pro/dir/ccr/oracle or \\marfs01\pro\dir\ccr\oracle</td>
+		<td style="font-size: 8pt;font-weight: normal;">Weekly PDF's are stored under <cfoutput>#Application.host_instance_pdf_dir#</cfoutput></td>
 	</tr>
 	</table>
 	<cfelse>
