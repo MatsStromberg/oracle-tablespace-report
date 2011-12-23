@@ -48,7 +48,7 @@
 	select distinct b.property_value
 	  from mgmt_target_properties a, mgmt_target_properties b
 	 where a.target_guid = b.target_guid
-	   and   a.property_value = '#Trim(qInstances.db_name)#'
+	   and   a.property_value = '#Trim(oraSID)#'
 	   and   b.property_name = 'MachineName'
 </cfquery>
 
