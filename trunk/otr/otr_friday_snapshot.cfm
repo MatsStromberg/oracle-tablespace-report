@@ -44,7 +44,6 @@
 <!--- <CFSTOREDPROC PROCEDURE="OTRREP.OTR_ReportingProc" DATASOURCE="OGC_SYSMAN">
 </CFSTOREDPROC> --->
 <!--- SnapShot Routine --->
-<!--- <cfset dRepDate = DateTimeFormat(Now(), 'dd.MM.yyyy HH:mm:ss') /> --->
 <cfset dRepDate = CreateODBCDateTime(CreateDateTime(Year(Now()),Month(Now()),Day(Now()),Hour(Now()),Minute(Now()),0)) />
 <!--- DB Instances with Password --->
 <cfquery name="qInstances" datasource="#application.datasource#">
