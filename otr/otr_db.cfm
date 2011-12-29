@@ -42,6 +42,11 @@
 <!--
 $(document).ready(function(){
 	$("table").tablesorter({debug: false, widgets: ['zebra'],sortList: [[0,0]]});
+	$("table").bind("sortStart",function() {  
+		$("#sort_overlay").show();  
+ 	}).bind("sortEnd",function() {  
+		$("#sort_overlay").hide();  
+	});  
 });
 function makeDisableSubmit(){
     /*var x=document.getElementById("qSubmit");
@@ -96,6 +101,9 @@ function confirmation(txt, url) {
 <body>
 <cfinclude template="_top_menu.cfm">
 <div align="center">
+	<div id="sort_overlay">
+		Please wait...
+	</div>
 <h2><cfoutput>#application.company#</cfoutput> - Oracle Instances</h2>
 <table border="0" cellpadding="5">
 <tr>

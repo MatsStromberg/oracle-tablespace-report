@@ -36,54 +36,74 @@
 </cfif>
 <!--- Create a new OTR_CUST_APPL_TBS_XT.DAT if it doesn't exists --->
 <cfif NOT FileExists(sFileCheck)>
-	<cfquery name="qAllDBs" datasource="#Application.datasource#">
-		select * from otr_db
-		 order by db_name
+	<!---
+		Are we on a local Windows host without direct access to the external table ?
+		If so, and if there is a valid external table defined remote... create a
+		new OTR_CUST_APPL_TBS_XT.DAT
+	--->
+	<cfquery name="qExtTbl" datasource="#Application.datasource#">
+		select * from otr_cust_appl_tbs_xt
+		order by db_name, db_tbs_name
 	</cfquery>
-	<cfset sCustID = "" />
-	<cfquery name="qGetCustomer" datasource="#Application.datasource#">
-		select cust_id from otr_cust
-		 order by cust_id
-	</cfquery>
-	<cfoutput query="qGetCustomer">
-		<cfif sCustID IS "">
-			<cfset sCustID = Trim(qGetCustomer.cust_id) />
-		</cfif>
-	</cfoutput>
-	<!--- Change the file extention from .xls to .tmp and generate the CSV File --->
-	<cfset oFile = FileOpen(ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL"),"write")>
-	<cfoutput query="qAllDBs">
-		<cfif Trim(qAllDBs.db_name) IS NOT ""><cfset sDummy = FileWriteline(oFile, "#Trim(sCustID)#;#Trim(qAllDBs.db_desc)#;#Trim(qAllDBs.db_name)#;NOT DEFINED")></cfif>
-	</cfoutput>
-	<cfset bDummy = FileClose(oFile)>
-	<!--- Make sure the file is in UNIX Format --->
-	<cfif cDirSep IS "/"><cfexecute name="#Application.UXdos2unix#" arguments="#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#" timeout="10"></cfexecute></cfif>
-	<cfif cDirSep IS "\"><cfexecute name="#Application.WINdos2unix#" arguments="#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#" timeout="10"></cfexecute></cfif>
-	<!--- Use SFTP to transfer the, uploaded or generated from .xls, CSV File under user Oracle and with extention .DAT
-	      This is used as an External Table in Oracle. --->
-	<cfscript>
-	    fso = CreateObject("java", "org.apache.commons.vfs.FileSystemOptions").init(); 
-	    CreateObject("java", "org.apache.commons.vfs.provider.sftp.SftpFileSystemConfigBuilder").getInstance().setStrictHostKeyChecking(fso, "no"); 
-		Selectors = CreateObject("java", "org.apache.commons.vfs.Selectors");
-
-	    fsManager = CreateObject("java", "org.apache.commons.vfs.VFS").getManager(); 
-
-	    uri = "sftp://#Application.sftpUser#:#Application.sftpPass#@#Application.sftpHost##Application.ogc_external_table#/OTR_CUST_APPL_TBS_XT.DAT"; 
-
-	    fo = fsManager.resolveFile(uri, fso); 
-	    lfo = fsManager.resolveFile("#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#"); 
-
-		fo.copyFrom(lfo, Selectors.SELECT_SELF);
-		
-	    lfo.close();
-		fs = fo.getFileSystem();
+	<cfif qExtTbl.RecordCount IS NOT 0>
+		<!--- External Table Exists but no local OTR_CUST_APPL_TBS_XT.DAT file --->
+		<cfset oFile = FileOpen(sFileCheck,"write")>
+		<cfoutput query="qExtTbl">
+			<cfif Trim(qExtTbl.db_name) IS NOT ""><cfset sDummy = FileWriteline(oFile, "#Trim(qExtTbl.cust_id)#;#Trim(qExtTbl.cust_appl_id)#;#Trim(qExtTbl.db_name)#;#Trim(qExtTbl.db_tbs_name)#")></cfif>
+		</cfoutput>
+		<cfset bDummy = FileClose(oFile)>
+		<cfif cDirSep IS "\"><cfexecute name="#Application.WINdos2unix#" arguments="#chr(34)##sFileCheck##chr(34)#" timeout="10"></cfexecute></cfif>
+	<cfelse>
+		<!--- No OTR_CUST_APPL_TBS_XT.DAT file and no remote external table --->
+		<cfquery name="qAllDBs" datasource="#Application.datasource#">
+			select * from otr_db
+			 order by db_name
+		</cfquery>
+		<cfset sCustID = "" />
+		<cfquery name="qGetCustomer" datasource="#Application.datasource#">
+			select cust_id from otr_cust
+			 order by cust_id
+		</cfquery>
+		<cfoutput query="qGetCustomer">
+			<cfif sCustID IS "">
+				<cfset sCustID = Trim(qGetCustomer.cust_id) />
+			</cfif>
+		</cfoutput>
+		<!--- Change the file extention from .xls to .tmp and generate the CSV File --->
+		<cfset oFile = FileOpen(ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL"),"write")>
+		<cfoutput query="qAllDBs">
+			<cfif Trim(qAllDBs.db_name) IS NOT ""><cfset sDummy = FileWriteline(oFile, "#Trim(sCustID)#;#Trim(qAllDBs.db_desc)#;#Trim(qAllDBs.db_name)#;NOT DEFINED")></cfif>
+		</cfoutput>
+		<cfset bDummy = FileClose(oFile)>
+		<!--- Make sure the file is in UNIX Format --->
+		<cfif cDirSep IS "/"><cfexecute name="#Application.UXdos2unix#" arguments="#chr(34)##ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")##chr(34)#" timeout="10"></cfexecute></cfif>
+		<cfif cDirSep IS "\"><cfexecute name="#Application.WINdos2unix#" arguments="#chr(34)##ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")##chr(34)#" timeout="10"></cfexecute></cfif>
+		<!--- Use SFTP to transfer the, uploaded or generated from .xls, CSV File under user Oracle and with extention .DAT
+		      This is used as an External Table in Oracle. --->
+		<cfscript>
+		    fso = CreateObject("java", "org.apache.commons.vfs.FileSystemOptions").init(); 
+		    CreateObject("java", "org.apache.commons.vfs.provider.sftp.SftpFileSystemConfigBuilder").getInstance().setStrictHostKeyChecking(fso, "no"); 
+			Selectors = CreateObject("java", "org.apache.commons.vfs.Selectors");
 	
-	    fsManager.closeFileSystem(fs); 
+		    fsManager = CreateObject("java", "org.apache.commons.vfs.VFS").getManager(); 
+	
+		    uri = "sftp://#Application.sftpUser#:#Application.sftpPass#@#Application.sftpHost##Application.ogc_external_table#/OTR_CUST_APPL_TBS_XT.DAT"; 
+	
+		    fo = fsManager.resolveFile(uri, fso); 
+		    lfo = fsManager.resolveFile("#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#"); 
+	
+			fo.copyFrom(lfo, Selectors.SELECT_SELF);
+			
+		    lfo.close();
+			fs = fo.getFileSystem();
+		
+		    fsManager.closeFileSystem(fs); 
 	</cfscript> 
 
-	<!--- Delete the file with extention .tmp --->
-	<cfset b = FileDelete('#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#') />
+		<!--- Delete the file with extention .tmp --->
+		<cfset b = FileDelete('#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#') />
 	
+	</cfif>
 </cfif>
 <cfif cDirSep IS "/">
 	<cfset sFile = FileRead('#Application.ogc_external_table##cDirSep#OTR_CUST_APPL_TBS_XT.DAT') />
@@ -144,6 +164,11 @@
 <!--
 $(document).ready(function(){
 	$("table").tablesorter({debug: false, widgets: ['zebra'],sortList: [[0,0]]});
+	$("table").bind("sortStart",function() {  
+		$("#sort_overlay").show();  
+ 	}).bind("sortEnd",function() {  
+		$("#sort_overlay").hide();  
+	});  
 });
 
 function makeDisableSubmit(){
@@ -199,6 +224,9 @@ function confirmation(txt, url) {
 <body>
 <cfinclude template="_top_menu.cfm">
 <div align="center">
+	<div id="sort_overlay">
+		Please wait...
+	</div>
 <!--- <cfoutput>#sTemplatePath#</cfoutput><br /> --->
 <h2><cfoutput>#Application.company#</cfoutput> - Oracle Customer/App/Tablespace</h2>
 <div align="center">
