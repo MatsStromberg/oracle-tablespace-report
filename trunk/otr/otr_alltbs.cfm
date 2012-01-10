@@ -31,7 +31,7 @@
 	  from otr_db db
 	 order by db_name
 </cfquery>
-
+<!---
 <cfquery name="qAlarm" datasource="#Application.datasource#">
     select tablespace_name, max_mb_free, prc
       from otr_tbs_space_rep_v
@@ -39,7 +39,7 @@
        and max_mb_free < #Application.tablespace.mb_left#
      order by prc DESC
 </cfquery>
-
+--->
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
@@ -116,25 +116,101 @@ function confirmation(txt, url) {
 		    order by prc DESC
 		</cfquery> --->
 		<cfquery name="qAlarm" datasource="#UCase(qInstances.db_name)#temp">
-			SELECT nvl(b.tablespace_name,nvl(a.tablespace_name,'UNKOWN')) tablespace_name,
-			       ROUND(NVL(b.BYTES, 0) / 1024 / 1024, 2) mb_free,
-			       ROUND(((a.maxbytes - a.BYTES) + NVL(b.BYTES, 0)) / 1024 / 1024, 2) max_mb_free,
-			       ROUND(((a.maxbytes - ((a.maxbytes - a.BYTES) + NVL (b.BYTES, 0))) / a.maxbytes) * 100, 2) prc
-			  FROM (SELECT tablespace_name, SUM (BYTES) BYTES,
-			                 SUM (CASE
-			                         WHEN maxbytes = 0
-			                            THEN BYTES
-			                         ELSE maxbytes
-			                      END) maxbytes
-			            FROM dba_data_files
-			        GROUP BY tablespace_name) a,
-			       (SELECT   tablespace_name, SUM (BYTES) BYTES, MAX (BYTES) largest
-			            FROM dba_free_space
-			        GROUP BY tablespace_name) b
-			 WHERE a.tablespace_name = b.tablespace_name(+)
-			   AND ROUND(((a.maxbytes - a.BYTES) + NVL(b.BYTES, 0)) / 1024 / 1024, 2) < #Application.tablespace.mb_left#
-			   AND ROUND(((a.maxbytes - ((a.maxbytes - a.BYTES) + NVL (b.BYTES, 0))) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
-			ORDER BY ((a.BYTES - NVL (b.BYTES, 0)) / a.BYTES) DESC
+			SELECT NVL(b.tablespace_name, NVL(a.tablespace_name, 'UNKOWN')) tablespace_name,
+		            ROUND(a.BYTES / 1024 / 1024, 2) mb_used,
+		            ROUND(NVL(b.BYTES, 0) / 1024 / 1024, 2) mb_free,
+		            ROUND(a.maxbytes / 1024 / 1024, 2) can_grow_to,
+		            ROUND(((a.maxbytes - a.BYTES) + NVL(b.BYTES, 0)) / 1024 / 1024, 2) max_mb_free,
+		            ROUND(((a.BYTES - NVL(b.BYTES, 0)) / a.BYTES) * 100, 2) prc_used,
+		            ROUND(((a.maxbytes - ((a.maxbytes - a.BYTES) + NVL(b.BYTES, 0))) / a.maxbytes) * 100, 2) prc
+		       FROM SYS.dba_tablespaces d,
+		            (SELECT   tablespace_name, SUM(BYTES) BYTES,
+		                      SUM(CASE
+		                             WHEN maxbytes = 0
+		                                THEN BYTES
+		                             ELSE maxbytes
+		                          END
+		                         ) maxbytes
+		                 FROM dba_data_files
+		             GROUP BY tablespace_name) a,
+		            (SELECT   tablespace_name, SUM(BYTES) BYTES, MAX(BYTES) largest
+		                 FROM dba_free_space
+		             GROUP BY tablespace_name) b
+		      WHERE a.tablespace_name = b.tablespace_name(+)
+		        AND d.tablespace_name = a.tablespace_name(+)
+		        AND NOT d.CONTENTS = 'UNDO'
+		        AND NOT (d.extent_management = 'LOCAL' AND d.CONTENTS = 'TEMPORARY')
+		        AND d.tablespace_name LIKE '%'
+				AND ROUND(((a.maxbytes - a.BYTES) + NVL(b.BYTES, 0)) / 1024 / 1024, 2) < #Application.tablespace.mb_left#
+				AND ROUND(((a.maxbytes - ((a.maxbytes - a.BYTES) + NVL (b.BYTES, 0))) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
+		   UNION ALL
+		   SELECT   NVL(d.tablespace_name, NVL (a.tablespace_name, 'UNKOWN')) tablespace_name,
+		            ROUND(a.BYTES / 1024 / 1024, 0) mb_used,
+		            ROUND(NVL(a.BYTES - t.BYTES, 0) / 1024 / 1024, 2) mb_free,
+		            ROUND(a.maxbytes / 1024 / 1024, 2) can_grow_to,
+		            ROUND((a.maxbytes - t.BYTES) / 1024 / 1024, 2) max_mb_free,
+		            ROUND(((a.BYTES - NVL(a.BYTES - t.BYTES, 0)) / a.BYTES) * 100, 2) prc_used,
+		            ROUND(((a.maxbytes - NVL(a.maxbytes - t.BYTES, 0)) / a.maxbytes) * 100, 2) prc
+		       FROM SYS.dba_tablespaces d,
+		            (SELECT   tablespace_name, SUM(BYTES) BYTES,
+		                      SUM(CASE
+		                             WHEN maxbytes = 0
+		                                THEN BYTES
+		                             ELSE maxbytes
+		                          END
+		                         ) maxbytes
+		                 FROM dba_temp_files
+		             GROUP BY tablespace_name) a,
+		            (SELECT   ss.tablespace_name,
+		                      SUM (ss.used_blocks * ts.BLOCKSIZE) BYTES
+		                 FROM gv$sort_segment ss, SYS.ts$ ts
+		                WHERE ss.tablespace_name = ts.NAME
+		             GROUP BY ss.tablespace_name) t
+		      WHERE a.tablespace_name = t.tablespace_name(+)
+		        AND d.tablespace_name = a.tablespace_name(+)
+		        AND d.extent_management = 'LOCAL'
+		        AND d.CONTENTS = 'TEMPORARY'
+		        AND d.tablespace_name LIKE '%'
+				AND ROUND((a.maxbytes - t.BYTES) / 1024 / 1024, 2) < #Application.tablespace.mb_left#
+				AND ROUND(((a.maxbytes - NVL(a.maxbytes - t.BYTES, 0)) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
+		   UNION ALL
+		   SELECT   NVL(d.tablespace_name,
+		                 NVL(a.tablespace_name, 'UNKOWN')
+		                ) tablespace_name,
+		            ROUND(a.BYTES / 1024 / 1024, 0) mb_used,
+		            ROUND(NVL(a.BYTES - u.BYTES, a.BYTES) / 1024 / 1024, 2) mb_free,
+		            ROUND(a.maxbytes / 1024 / 1024, 2) can_grow_to,
+		            ROUND(NVL(a.maxbytes - u.BYTES, a.maxbytes) / 1024 / 1024, 2) max_mb_free,
+		            ROUND(((a.BYTES - NVL(a.BYTES - u.BYTES, a.BYTES)) / a.BYTES) * 100, 2) prc_used,
+		            ROUND(((a.maxbytes - NVL (a.maxbytes - u.BYTES, a.maxbytes)) / a.maxbytes) * 100, 2) prc
+		       FROM SYS.dba_tablespaces d,
+		            (SELECT   tablespace_name,SUM (BYTES) BYTES,
+		                      SUM(CASE
+		                             WHEN maxbytes = 0
+		                                THEN BYTES
+		                             ELSE maxbytes
+		                          END
+		                         ) maxbytes
+		                 FROM dba_data_files
+		             GROUP BY tablespace_name) a,
+		            (SELECT   tablespace_name, SUM (BYTES) BYTES
+		                 FROM (SELECT   tablespace_name, SUM(BYTES) BYTES, status
+		                           FROM dba_undo_extents
+		                          WHERE status = 'ACTIVE'
+		                       GROUP BY tablespace_name, status
+		                       UNION ALL
+		                       SELECT   tablespace_name, SUM(BYTES) BYTES, status
+		                           FROM dba_undo_extents
+		                          WHERE status = 'UNEXPIRED'
+		                       GROUP BY tablespace_name, status)
+		             GROUP BY tablespace_name) u
+		      WHERE a.tablespace_name = u.tablespace_name(+)
+		        AND d.tablespace_name = a.tablespace_name(+)
+		        AND d.CONTENTS = 'UNDO'
+		        AND d.tablespace_name LIKE '%'
+				AND ROUND(NVL(a.maxbytes - u.BYTES, a.maxbytes) / 1024 / 1024, 2) < #Application.tablespace.mb_left#
+				AND ROUND(((a.maxbytes - NVL (a.maxbytes - u.BYTES, a.maxbytes)) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
+		   ORDER BY 7 DESC
 		</cfquery>
 		<cfcatch type="Database">
 			<cfset iDBErr = 1>
