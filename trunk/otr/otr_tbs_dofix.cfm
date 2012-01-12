@@ -81,12 +81,10 @@
 	</cfquery>
 	<cfset nNewSize = NumberFormat(qDBFinfo.max_mb + 2000.0, '999999999') />
 	<cfif dIncrease IS 1>
-		<!--- --->
 		<cfquery name="qIncrease" datasource="#UCase(oraSID)#temp">
 			ALTER TABLESPACE #oraTBS# AUTOEXTEND ON MAXSIZE #nNewSize#M
 		</cfquery>
-		<!--- --->
-		<cfoutput>ALTER TABLESPACE #oraTBS# AUTOEXTEND ON MAXSIZE #nNewSize#M;</cfoutput>
+		<!--- <cfoutput>ALTER TABLESPACE #oraTBS# AUTOEXTEND ON MAXSIZE #nNewSize#M;</cfoutput> --->
 	</cfif>
 <cfelse>
 	<cfif dIncrease IS 1>
@@ -101,18 +99,37 @@
 		<cfquery name="qIncrease" datasource="#UCase(oraSID)#temp">
 			ALTER DATABASE DATAFILE '#oraDBF#' AUTOEXTEND ON MAXSIZE #Int(nNewSize)#M
 		</cfquery>
-		<cfoutput>ALTER DATABASE DATAFILE '#oraDBF#' AUTOEXTEND ON MAXSIZE #nNewSize#M;</cfoutput>
+		<!--- <cfoutput>ALTER DATABASE DATAFILE '#oraDBF#' AUTOEXTEND ON MAXSIZE #nNewSize#M;</cfoutput> --->
 	</cfif>
 	<cfif dAddFile IS 1>
 		<cfquery name="qAddFile" datasource="#UCase(oraSID)#temp">
 			ALTER TABLESPACE "#oraTBS#" ADD DATAFILE '#oraDBF#' SIZE 100M AUTOEXTEND ON NEXT 100M MAXSIZE 2000M
 		</cfquery>
-		<cfoutput>ALTER TABLESPACE "#oraTBS#" ADD DATAFILE '#oraDBF#' SIZE 100M AUTOEXTEND ON NEXT 100M MAXSIZE 2000M;</cfoutput>
+		<!--- <cfoutput>ALTER TABLESPACE "#oraTBS#" ADD DATAFILE '#oraDBF#' SIZE 100M AUTOEXTEND ON NEXT 100M MAXSIZE 2000M;</cfoutput> --->
 	</cfif>
 </cfif>
 
 <cfif DataSourceIsValid("#UCase(oraSID)#temp")>
 	<cfset DataSourceDelete( "#UCase(oraSID)#temp" )>
 </cfif>
-
+<!--- Send E-Mail to the DBA Group --->
+<cfif Application.mailserver IS NOT "">
+	<cfmail from="#Application.dba_group_mail#" 
+			to="#Application.dba_group_mail#" 
+			subject="Tablespace Increased!" 
+			server="#Application.mailserver#" 
+			port="#Application.mailport#" 
+			timeout="#Application.mailtimeout#" 
+			type="html">
+				<html>
+				<head><title>TABLESPACE ADJUSTED</title></head>
+				<body>
+					<strong>#oraDBF#</strong> on Instance <strong>#UCase(oraSID)#</strong> was
+					just extended with 2 GB more.<br />
+					Please make sure there is enough storage space available for this
+					tablespace to grow.
+				</body>
+				</html>
+	</cfmail>
+</cfif>
 <cflocation url="/otr/index.cfm" addtoken="No" />

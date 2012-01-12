@@ -38,10 +38,12 @@
 		<cfset Application.datasource = "OTR_OTRREP" />
 		<cfset Application.dbusername = "OTRREP" />
 		<cfset Application.dbpassword = "otrrep4otr" />
-		<!--- MailServer Settings (Not used at the moment) --->
+		<!--- MailServer Settings --->
 		<cfset Application.mailserver = "" />
 		<cfset Application.mailport = "" />
-		<cfset Application.mailtimout = "" />
+		<cfset Application.mailtimeout = "" />
+		<!--- Mail adress for DBA or DBA Group --->
+		<cfset Application.dba_group_mail = "" />
 		<!--- Company Settings --->
 		<cfset Application.company = "My Company Inc." />
 		<!--- Excel Document Info --->
