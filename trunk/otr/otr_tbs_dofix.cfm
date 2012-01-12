@@ -116,7 +116,7 @@
 <cfif Application.mailserver IS NOT "">
 	<cfmail from="#Application.dba_group_mail#" 
 			to="#Application.dba_group_mail#" 
-			subject="Tablespace Increased!" 
+			subject="Tablespace #oraDBF# on #UCase(oraSID)# just got another 2GB!" 
 			server="#Application.mailserver#" 
 			port="#Application.mailport#" 
 			timeout="#Application.mailtimeout#" 
@@ -124,8 +124,9 @@
 				<html>
 				<head><title>TABLESPACE ADJUSTED</title></head>
 				<body>
-					<strong>#oraDBF#</strong> on Instance <strong>#UCase(oraSID)#</strong> was
+					Tablespace <strong>#oraDBF#</strong> on Instance <strong>#UCase(oraSID)#</strong> was
 					just extended with 2 GB more.<br />
+					<strong>#UCase(oraSID)#</strong> is located on host <strong>#LCase(qHost.property_value)#</strong><br />
 					Please make sure there is enough storage space available for this
 					tablespace to grow.
 				</body>
