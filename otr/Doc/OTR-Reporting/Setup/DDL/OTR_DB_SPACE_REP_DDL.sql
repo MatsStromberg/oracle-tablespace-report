@@ -1,21 +1,21 @@
 ACCEPT P_OTRDB DEFAULT 'OTR' CHAR Prompt "Enter Database Alias for the OTR Repository [OTR]: "
-ACCEPT P_SYS_Password CHAR Prompt "Enter Password for user SYS: " HIDE
+-- ACCEPT P_SYS_Password CHAR Prompt "Enter Password for user SYS: " HIDE
 ACCEPT P_OTRREP_Password CHAR Prompt "Enter Password for user OTRREP: " HIDE
-Prompt "Path for the External table must be LOCALLY on the OTR DB Server (no UNC path allowed!)"
-ACCEPT P_XTFILE DEFAULT '/orascripts/scripts/monitoring/xt/OTR' CHAR Prompt "Enter path for the External Table [/orascripts/scripts/monitoring/xt/OTR]: "
-ACCEPT P_SQLNET_DOMAIN DEFAULT 'MBCZH.CH' CHAR Prompt "Enter SQLNET.DEFAULT_DOMAIN [MBCZH.CH]: "
+-- Prompt "Path for the External table must be LOCALLY on the OTR DB Server (no UNC path allowed!)"
+-- ACCEPT P_XTFILE DEFAULT '/orascripts/scripts/monitoring/xt/OTR' CHAR Prompt "Enter path for the External Table [/orascripts/scripts/monitoring/xt/OTR]: "
+-- ACCEPT P_SQLNET_DOMAIN DEFAULT 'MBCZH.CH' CHAR Prompt "Enter SQLNET.DEFAULT_DOMAIN [MBCZH.CH]: "
 
 -- PROMPT Connecting as SYS AS SYSDBA on OGC2ICB database, please enter SYS password and press ENTER
-connect SYS/&P_SYS_Password@&P_OTRDB AS SYSDBA
+-- connect SYS/&P_SYS_Password@&P_OTRDB AS SYSDBA
 
-PROMPT Creating DIRECTORY 'OTR_REP_DATA_DIR'
-REM NOTICE: Must be LOCALLY on the OTR Repository DB Server (no UNC path allowed)!
-REM         Can ofcourse be an NFS mountpoint!
-create directory OTR_REP_DATA_DIR as '&P_XTFILE'
-/
+-- PROMPT Creating DIRECTORY 'OTR_REP_DATA_DIR'
+-- REM NOTICE: Must be LOCALLY on the OTR Repository DB Server (no UNC path allowed)!
+-- REM         Can ofcourse be an NFS mountpoint!
+-- create directory OTR_REP_DATA_DIR as '&P_XTFILE'
+-- /
 
-GRANT ALL ON DIRECTORY OTR_REP_DATA_DIR TO OTRREP
-/
+-- GRANT ALL ON DIRECTORY OTR_REP_DATA_DIR TO OTRREP
+-- /
 
 PROMPT Connecting as OTRREP on &P_OTRDB database
 connect OTRREP/&P_OTRREP_Password@&P_OTRDB
@@ -27,7 +27,8 @@ CREATE TABLE OTR_DB
  ,DB_ENV  CHAR(3)       NOT NULL
  ,DB_DESC VARCHAR2(100) NOT NULL 
  ,SYSTEM_PASSWORD VARCHAR2(200)
- )
+ ,DB_HOST VARCHAR2(100)
+ ,DB_PORT NUMBER(6) DEFAULT 1521 )
  TABLESPACE OTR_REP_DATA
 /
 
@@ -38,6 +39,10 @@ COMMENT ON COLUMN OTRREP.OTR_DB.DB_ENV IS 'Environment (DEE=Dedicated Enterprise
 COMMENT ON COLUMN OTRREP.OTR_DB.DB_DESC IS 'Descriptive name for the Instance'
 /
 COMMENT ON COLUMN OTRREP.OTR_DB.SYSTEM_PASSWORD IS 'Password for user SYSTEM'
+/
+COMMENT ON COLUMN OTRREP.OTR_DB.DB_HOST IS 'Host server for this Instance'
+/
+COMMENT ON COLUMN OTRREP.OTR_DB.DB_PORT IS 'Listener Port for this Instance'
 /
 
 
@@ -55,20 +60,46 @@ COMMENT ON COLUMN OTRREP.OTR_CUST.CUST_NAME IS 'Company name of the customer'
 /
 
 
-PROMPT Creating Table 'OTR_CUST_APPL_TBS_XT' - EXTERNALLY IDENTIFIED (MAINTAINED BY XLS)!
-create table OTR_CUST_APPL_TBS_XT
- (CUST_ID           VARCHAR2(20)
- ,CUST_APPL_ID      VARCHAR2(30)
- ,DB_NAME           VARCHAR2(20)
- ,DB_TBS_NAME       VARCHAR2(30)
+PROMPT Creating Table 'OTR_CUST_APPL_TBS' - MAINTAINED OVER EXCEL!
+create table OTR_CUST_APPL_TBS
+ (CUST_ID            VARCHAR(20)   NOT NULL
+ ,CUST_APPL_ID       VARCHAR(100)
+ ,DB_NAME            VARCHAR(20)   NOT NULL
+ ,DB_TBS_NAME        VARCHAR(30)   NOT NULL
+ ,THRESHOLD_WARNING  NUMBER(6)     DEFAULT 85
+ ,THRESHOLD_CRITICAL NUMBER(6)     DEFAULT 97
  )
- organization external  
- (type oracle_loader  
-  default directory OTR_REP_DATA_DIR
-  access parameters (records delimited by newline 
-                     fields terminated by ';') 
-  location ('OTR_CUST_APPL_TBS_XT.DAT'))
+ TABLESPACE OTR_REP_DATA
 /
+
+COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.CUST_ID IS 'Short ID for custumer, usually a 3 letter code'
+/
+COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.CUST_APPL_ID IS 'Descriptive name for the Instance'
+/
+COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.DB_NAME IS 'TNS NAME used for Oracle Net connection'
+/
+COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.DB_TBS_NAME IS 'Tablespace name to monitor'
+/
+COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.THRESHOLD_WARNING IS 'Warning threshold value'
+/
+COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.THRESHOLD_CRITICAL IS 'Critical threshold value'
+/
+
+
+-- PROMPT Creating Table 'OTR_CUST_APPL_TBS_XT' - EXTERNALLY IDENTIFIED (MAINTAINED BY XLS)!
+-- create table OTR_CUST_APPL_TBS_XT
+--  (CUST_ID           VARCHAR2(20)
+--  ,CUST_APPL_ID      VARCHAR2(30)
+--  ,DB_NAME           VARCHAR2(20)
+--  ,DB_TBS_NAME       VARCHAR2(30)
+--  )
+--  organization external  
+--  (type oracle_loader  
+--   default directory OTR_REP_DATA_DIR
+--   access parameters (records delimited by newline 
+--                      fields terminated by ';') 
+--   location ('OTR_CUST_APPL_TBS_XT.DAT'))
+-- /
 
 PROMPT Creating Table 'OTR_DB_SPACE_REP'
 CREATE TABLE OTR_DB_SPACE_REP
@@ -116,6 +147,11 @@ ALTER TABLE OTR_CUST
       USING INDEX TABLESPACE OTR_REP_INDX)
 /
 
+PROMPT Adding constraint to table 'OTR_CUST_APPL_TBS'
+ALTER TABLE OTR_CUST_APPL_TBS
+ ADD (CONSTRAINT OTR_CUST_APPL_TBS_PK PRIMARY KEY (DB_NAME, DB_TBS_NAME)
+      USING INDEX TABLESPACE OTR_REP_INDX)
+/
 
 PROMPT Adding constraint to table 'OTR_DB_SPACE_REP'
 ALTER TABLE OTR_DB_SPACE_REP
