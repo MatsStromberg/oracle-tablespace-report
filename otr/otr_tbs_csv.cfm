@@ -1,3 +1,4 @@
+<cfsetting enablecfoutputonly="true" />
 <!---
     Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
     
@@ -24,13 +25,12 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<cfsetting enablecfoutputonly="true" />
 <cfset cDirSep = FileSeparator()>
 <cfquery name="qParFile" datasource="#application.datasource#">
-	select * from otr_cust_appl_tbs_xt
+	select * from otr_cust_appl_tbs
 </cfquery>
 
-<CFHEADER NAME="Content-Disposition" VALUE="inline; filename=OTR_CUST_APPL_TBS_XT.csv">
+<CFHEADER NAME="Content-Disposition" VALUE="inline; filename=OTR_CUST_APPL_TBS.csv">
 <cfcontent type="application/vnd.ms-excel; name='excel'">
-<cfoutput query="qParFile">#Trim(qParFile.cust_id)#;#Trim(qParFile.cust_appl_id)#;#Trim(qParFile.db_name)#;#Trim(qParFile.db_tbs_name)#
+<cfoutput query="qParFile">#Trim(qParFile.cust_id)#;#Trim(qParFile.cust_appl_id)#;#Trim(qParFile.db_name)#;#Trim(qParFile.db_tbs_name)#;#Trim(qParFile.threshold_warning)#;#Trim(qParFile.threshold_critical)#
 </cfoutput><cfsetting enablecfoutputonly="false" />
