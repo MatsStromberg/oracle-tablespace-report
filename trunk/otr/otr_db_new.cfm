@@ -112,6 +112,14 @@ function showDiv() {
 		<td width="300"><input type="password" name="system_password" id="system_password" value="" size="35"></td>
 	</tr>
 	<tr>
+		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Hostname:&nbsp;</td>
+		<td width="300"><input type="text" name="db_host" id="db_host" value="" size="33"></td>
+	</tr>
+	<tr>
+		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Listener Port:&nbsp;</td>
+		<td width="300"><input type="text" name="db_port" id="db_port" value="" size="6"></td>
+	</tr>
+	<tr>
 		<td colspan="2">&nbsp;</td>
 	</tr>
 	<tr>

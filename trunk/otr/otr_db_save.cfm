@@ -27,20 +27,24 @@
 <cfquery name="qInsert" datasource="#application.datasource#">
 <cfif IsDefined("FORM.system_password") AND Trim(FORM.system_password GT "")>
 	insert into otr_db
-			(db_name, db_env, db_desc, system_password) 
+			(db_name, db_env, db_desc, system_password, db_host, db_port) 
 	 VALUES (<cfqueryparam value="#FORM.db_name#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_env#"  cfsqltype="cf_sql_varchar" />,
 	 		 <cfqueryparam value="#FORM.db_desc#" cfsqltype="cf_sql_varchar" />,
-	 		 <cfqueryparam value="#Application.pw_hash.encryptOraPW(Trim(FORM.system_password))#" cfsqltype="cf_sql_varchar" />)
+	 		 <cfqueryparam value="#Application.pw_hash.encryptOraPW(Trim(FORM.system_password))#" cfsqltype="cf_sql_varchar" />,
+			 <cfqueryparam value="#FORM.db_host#" cfsqltype="cf_sql_varchar" />,
+			 <cfqueryparam value="#FORM.db_port#" cfsqltype="cf_sql_integer" />)
 <cfelse>
 	insert into otr_db
-			(db_name, db_env, db_desc) 
+			(db_name, db_env, db_desc, db_host, db_port) 
 	 VALUES (<cfqueryparam value="#FORM.db_name#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_env#"  cfsqltype="cf_sql_varchar" />,
-	 		 <cfqueryparam value="#FORM.db_desc#" cfsqltype="cf_sql_varchar" />)
+	 		 <cfqueryparam value="#FORM.db_desc#" cfsqltype="cf_sql_varchar" />,
+			 <cfqueryparam value="#FORM.db_host#" cfsqltype="cf_sql_varchar" />,
+			 <cfqueryparam value="#FORM.db_port#" cfsqltype="cf_sql_integer" />)
 </cfif>
 </cfquery>
-
+<!---
 <cfquery name="qDBLinkCheck" datasource="#application.datasource#">
 	select * from user_db_links
 	where db_link = <cfqueryparam value="#FORM.db_name#.#application.oracle.domain_name#" cfsqltype="cf_sql_varchar">
@@ -52,5 +56,5 @@
 		create database link "#link_name#" connect to "#Application.dbusername#" identified by "#application.dbpassword#" using '#link_name#'
 	</cfquery>
 </cfif>
-
+--->
 <cflocation url="otr_db.cfm" addtoken="No">

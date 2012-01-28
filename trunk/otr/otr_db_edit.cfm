@@ -27,7 +27,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
 <cfquery name="qEdit" datasource="#application.datasource#">
-	select db_name, db_env, db_desc, system_password 
+	select db_name, db_env, db_desc, system_password, db_host, db_port
 	from otr_db 
 	where db_name = '#URL.db_name#'
 	order by db_name
@@ -119,6 +119,14 @@ function showDiv() {
 	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">SYSTEM Password:&nbsp;</td>
 		<td width="300"><input type="password" name="system_password" id="system_password" value="<cfif Trim(qEdit.system_password) GT "">#Application.pw_hash.decryptOraPW(Trim(qEdit.system_password))#</cfif>" size="35"></td>
+	</tr>
+	<tr>
+		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Hostname:&nbsp;</td>
+		<td width="300"><input type="text" name="db_host" id="db_host" value="#Trim(qEdit.db_host)#" size="33"></td>
+	</tr>
+	<tr>
+		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Listener Port:&nbsp;</td>
+		<td width="300"><input type="text" name="db_port" id="db_port" value="#Trim(qEdit.db_port)#" size="6"></td>
 	</tr>
 	<tr>
 		<td colspan="2">&nbsp;</td>
