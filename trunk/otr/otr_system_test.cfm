@@ -83,6 +83,9 @@
 			<cfset iDBErr = 1>
 		</cfcatch>
 	</cftry>
+	<cfif DataSourceIsValid("#UCase(Trim(FORM.db_name))#temp")>
+		<cfset DataSourceDelete( "#UCase(Trim(FORM.db_name))#temp" ) />
+	</cfif>
 </cfif>
 <cfsetting enablecfoutputonly="false">
 <html>
