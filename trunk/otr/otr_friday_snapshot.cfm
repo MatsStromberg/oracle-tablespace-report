@@ -47,41 +47,51 @@
 <cfset dRepDate = CreateODBCDateTime(CreateDateTime(Year(Now()),Month(Now()),Day(Now()),Hour(Now()),Minute(Now()),0)) />
 <!--- DB Instances with Password --->
 <cfquery name="qInstances" datasource="#application.datasource#">
-	select db_name, system_password 
+	select db_name, system_password, db_host, db_port 
 	from otr_db
 	order by db_name
 </cfquery>
 <cfoutput query="qInstances">
 	<cfif Trim(qInstances.system_password) IS NOT "">
 	<cftry>
-		<!--- Get Listener Port --->
-		<cfquery name="qPort" datasource="OTR_SYSMAN">
-			select distinct b.property_value
-			from mgmt_target_properties a, mgmt_target_properties b
-			where a.target_guid = b.target_guid
-			and   a.property_value = '#Trim(qInstances.db_name)#'
-			and   b.property_name = 'Port'
-		</cfquery>
+		<cfif Trim(qInstances.db_port) IS "">
+			<!--- Get Listener Port --->
+			<cfquery name="qPort" datasource="OTR_SYSMAN">
+				select distinct b.property_value
+				  from mgmt_target_properties a, mgmt_target_properties b
+				 where a.target_guid = b.target_guid
+				   and a.property_value = '#Trim(qInstances.db_name)#'
+				   and b.property_name = 'Port'
+			</cfquery>
+			<cfset iPort = qPort.property_value />
+		<cfelse>
+			<cfset iPort = qInstances.db_port />
+		</cfif>
 
-		<!--- Get Listener Port --->
-		<cfquery name="qHost" datasource="OTR_SYSMAN">
-			select distinct b.property_value
-			from mgmt_target_properties a, mgmt_target_properties b
-			where a.target_guid = b.target_guid
-			and   a.property_value = '#Trim(qInstances.db_name)#'
-			and   b.property_name = 'MachineName'
-		</cfquery>
+		<cfif Trim(qInstances.db_host) IS "">
+			<!--- Get Listener Host --->
+			<cfquery name="qHost" datasource="OTR_SYSMAN">
+				select distinct b.property_value
+				from mgmt_target_properties a, mgmt_target_properties b
+				where a.target_guid = b.target_guid
+				and   a.property_value = '#Trim(qInstances.db_name)#'
+				and   b.property_name = 'MachineName'
+			</cfquery>
+			<cfset sHost = qHost.property_value />
+		<cfelse>
+			<cfset sHost = qInstances.db_host />
+		</cfif>
 
 		<!--- Decrypt the SYSTEM Password --->
 		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
-		<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHost.property_value)#:#qPort.property_value#:#UCase(qInstances.db_name)#" />
+		<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qInstances.db_name)#" />
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 		<cfset s.databasename = "#UCase(qInstances.db_name)#" />
 		<cfset s.username     = "system" />
 		<cfset s.password     = "#sPassword#" />
-		<cfset s.port         = "#qPort.property_value#" />
+		<cfset s.port         = "#iPort#" />
 
 		<!--- If Temporary Datasource exists... Delete it --->
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
@@ -95,8 +105,8 @@
 		<!--- Lookup the Tablespaces to be monitored --->
 		<cfquery name="qTBS" datasource="OTR_OTRREP">
 			select a.db_name, a.db_tbs_name
-			  from OTRREP.OTR_CUST_APPL_TBS_XT a
-    		 where exists (select 1 from OTRREP.OTR_CUST_APPL_TBS_XT b where b.CUST_APPL_ID=a.CUST_APPL_ID)
+			  from OTRREP.OTR_CUST_APPL_TBS a
+    		 where exists (select 1 from OTRREP.OTR_CUST_APPL_TBS b where b.CUST_APPL_ID=a.CUST_APPL_ID)
 			   and a.db_name = '#qInstances.db_name#'
 	      order by CUST_APPL_ID;
 		</cfquery>
@@ -136,7 +146,7 @@
 				</cfquery>
 			</cfif>
 		</cfloop>
-		<!--- NFS Statistics --->
+		<!--- NFS Statistics (Only if EM is used) --->
 		<cfquery name="qN" datasource="OTR_SYSMAN">
 		   SELECT DISTINCT io.db_name, n.target_name hostname, n.nfs_server,
 		                   n.filesystem, n.mountpoint mountpoint,
