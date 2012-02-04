@@ -115,10 +115,10 @@
 		<cfset s.port         = "#qPort.property_value#" />
 
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
-			<cfset DataSourceDelete( "#UCase(qInstances.db_name)#temp" ) />
+			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
 		</cfif>
 		<cfif NOT DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
-			<cfset DataSourceCreate( "#UCase(qInstances.db_name)#temp", s ) />
+			<cfset DataSourceCreate("#UCase(qInstances.db_name)#temp", s) />
 		</cfif>
 		<!--- Lookup Default Threshold --->
 		<cfquery name="qTHdefault" datasource="#UCase(qInstances.db_name)#temp">
@@ -154,8 +154,14 @@
 			</cfquery>
 		</cfoutput>
 		<cfcatch type="Database">
+			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
+				<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
+			</cfif>
 			<cfset iDBErr = 1>
 		</cfcatch>
+		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
+			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
+		</cfif>
 	</cftry>
 </cfloop>
 
