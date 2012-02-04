@@ -32,11 +32,31 @@
 	ORDER BY DATABASE_NAME
 </cfquery>
 
-<cfoutput query="qEM">
-	<cfquery name="qCreateDBs" datasource="#Application.datasource#">
-		insert into OTRREP.OTR_DB (DB_NAME, DB_ENV,  DB_DESC)
-		VALUES ('#qEM.DATABASE_NAME#','SEE', '#qEM.DATABASE_NAME#')
+<cfloop query="qEM">
+	<!--- Get Listener Port --->
+	<cfquery name="qPort" datasource="OTR_SYSMAN">
+		select distinct b.property_value
+		from mgmt_target_properties a, mgmt_target_properties b
+		where a.target_guid = b.target_guid
+		and   a.property_value = '<cfoutput>#Trim(qEM.DATABASE_NAME)#</cfoutput>'
+		and   b.property_name = 'Port'
 	</cfquery>
-</cfoutput>
 
-<cflocation url="/otr/otr_setup.cfm" addtoken="no" />
+	<!--- Get Host server --->
+	<cfquery name="qHost" datasource="OTR_SYSMAN">
+		select distinct b.property_value
+		from mgmt_target_properties a, mgmt_target_properties b
+		where a.target_guid = b.target_guid
+		and   a.property_value = '<cfoutput>#Trim(qEM.DATABASE_NAME)#</cfoutput>'
+		and   b.property_name = 'MachineName'
+	</cfquery>
+
+	<cfquery name="qCreateDBs" datasource="#Application.datasource#">
+		insert into OTRREP.OTR_DB (DB_NAME, DB_ENV, DB_DESC, SYSTEM_PASSWORD, DB_HOST, DB_PORT)
+		VALUES ('<cfoutput>#qEM.DATABASE_NAME#</cfoutput>','SEE', '<cfoutput>#qEM.DATABASE_NAME#</cfoutput>', '',
+				'<cfoutput>#qHost.property_value#</cfoutput>', <cfoutput>#qPort.property_value#</cfoutput>)
+	</cfquery>
+</cfloop>
+
+<cflocation url="/otr/otr_setup_db_edit.cfm" addtoken="No" />
+<!--- <cflocation url="/otr/otr_setup.cfm" addtoken="no" /> --->
