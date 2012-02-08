@@ -27,9 +27,10 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
 <cfquery name="qHostInstances" datasource="#application.datasource#">
-	select distinct a.hostname db_host, a.db_name, a.rep_date
-	from otrrep.otr_nfs_space_rep a, otrrep.otr_space_rep_max_timestamp_v b
+	select distinct a.hostname db_host, a.db_name, a.rep_date, c.db_port, c.system_password
+	from otrrep.otr_nfs_space_rep a, otrrep.otr_space_rep_max_timestamp_v b, otrrep.otr_db c
 	where TRUNC(a.rep_date) = b.rep_date 
+	  and a.db_name = c.db_name
 	order by rep_date desc, hostname, db_name
 </cfquery>
 
@@ -118,19 +119,56 @@ function confirmation(txt, url) {
 	<tr>
 		<th width="200" style="font-size: 9pt;font-weight: bold;">Host</th>
 		<th width="200" style="font-size: 9pt;font-weight: bold;">SID</th>
+		<th width="200" style="font-size: 9pt;font-weight: bold;">Release</th>
 	</tr>
 	</thead>
 	<tfoot>
 	<tr>
 		<th width="200" style="font-size: 9pt;font-weight: bold;">Host</th>
 		<th width="200" style="font-size: 9pt;font-weight: bold;">SID</th>
+		<th width="200" style="font-size: 9pt;font-weight: bold;">Release</th>
 	</tr>
 	</tfoot>
 	<tbody>
-	<cfoutput query="qHostInstances"><tr<cfif qHostInstances.CurrentRow mod 2> class="alternate"</cfif>>
-		<td>#qHostInstances.db_host#</td>
-		<td>#qHostInstances.db_name#</td>
-	</tr><cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') /></cfoutput>
+	<cfloop query="qHostInstances">
+		<!--- Decrypt the SYSTEM Password --->
+		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qHostInstances.system_password)) />
+		<!--- Create Temporary Data Source --->
+		<cfset s = StructNew() />
+		<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHostInstances.db_host)#:#qHostInstances.db_port#:#UCase(qHostInstances.db_name)#" />
+		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
+		<cfset s.databasename = "#UCase(qHostInstances.db_name)#" />
+		<cfset s.username     = "system" />
+		<cfset s.password     = "#sPassword#" />
+		<cfset s.port         = "#qHostInstances.db_port#" />
+
+		<cfif DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
+			<cfset DataSourceDelete( "#UCase(qHostInstances.db_name)#temp" ) />
+		</cfif>
+		<cfif NOT DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
+			<cfset DataSourceCreate( "#UCase(qHostInstances.db_name)#temp", s ) />
+		</cfif>
+		<cfquery name="qDBversion" datasource="#UCase(qHostInstances.db_name)#temp">
+		select SUBSTRB (SUBSTR (b.banner, INSTR (b.banner, 'Release') + 8, 10), 1, 10) VERSION
+		  from SYS.v_$version b
+		 WHERE INSTR (UPPER (b.banner), 'ORACLE') > 0
+	       	   AND (   INSTR (UPPER (b.banner), 'ENTERPRISE') > 0
+                    OR (   INSTR (UPPER (b.banner), 'ORACLE9I') > 0
+                        OR (   INSTR (UPPER (b.banner), 'ORACLE8I') > 0
+                            OR INSTR (UPPER (b.banner), 'DATABASE') > 0
+                           )
+                       )
+                  )
+		</cfquery>
+	<tr<cfif qHostInstances.CurrentRow mod 2> class="alternate"</cfif>>
+		<td><cfoutput>#qHostInstances.db_host#</cfoutput></td>
+		<td><cfoutput>#qHostInstances.db_name#</cfoutput></td>
+		<td><cfoutput>#qDBversion.version#</cfoutput></td>
+	</tr>
+		<cfif DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
+			<cfset DataSourceDelete( "#UCase(qHostInstances.db_name)#temp" ) />
+		</cfif>
+	<cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') /></cfloop>
 	</tbody>
 	</table>
 	<table border="0" cellpadding="0" cellspacing="0">
