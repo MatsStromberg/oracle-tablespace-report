@@ -25,58 +25,58 @@
     <http://www.gnu.org/licenses/>.
 --->
 <cfsetting enablecfoutputonly="true" />
-<cfset sftpHost = "#application.sftpHost#" />
-<cfset sftpUser = "#application.sftpUser#" />
-<cfset sftpPass = "#application.sftpPass#" />
 <cfset cDirSep = FileSeparator() />
 <cfset bExcel = 0>
+<cfset sPath = GetDirectoryfrompath(GetBasetemplatePath()) />
 <cfif cDirSep IS "/">
-	<cfset sPath = GetDirectoryfrompath(GetBasetemplatePath()) />
 	<cfif Trim(FORM.file_type) IS "xls">
-		<cfset sFile = '#application.ogc_external_table##cDirSep#OTR_CUST_APPL_TBS_XT.xls' />
+		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.xls' />
 		<cfset bExcel = 1>
 	<cfelse>
-		<cfset sFile = '#application.ogc_external_table##cDirSep#OTR_CUST_APPL_TBS_XT.tmp' /><br>
+		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.csv' /><br>
 		<cfset bExcel = 0>
 	</cfif>
-	<cfset sFile2 = '#application.ogc_external_table##cDirSep#OTR_CUST_APPL_TBS_XT.DAT' />
 <cfelse>
-	<cfset sPath = GetDirectoryfrompath(GetBasetemplatePath()) />
 	<cfif Trim(FORM.file_type) IS "xls">
-		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS_XT.xls' />
+		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.xls' />
 		<cfset bExcel = 1>
 	<cfelse>
-		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS_XT.tmp' /><br>
+		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.csv' /><br>
 		<cfset bExcel = 0>
 	</cfif>
-	<cfset sFile2 = '#application.ogc_external_table##cDirSep#OTR_CUST_APPL_TBS_XT.DAT' />
 </cfif>
 <cfsetting enablecfoutputonly="true" />
-<!--- <cfoutput>#sPath#<br />#sFile#</cfoutput> --->
+<!--- 
+<cfoutput>
+#sPath#<br />#sFile#<br />#bExcel#
+</cfoutput>
+ --->
 
 <cfset args = {
 	destination : "#sFile#",
 	filefield : "file_name",
 	nameconflict : "overwrite"
-	}>
+	} />
 
 <cfset x = StructNew()>
 <cfset x = FileUpload(ArgumentCollection = args) />
 <!--- If we're on UNIX/Linux set the access mode on the target file to 777 --->
-<cfif cDirSep IS "/"><cfset x2 = FileSetAccessmode(#sFile#, 777) /></cfif>
+<!--- <cfif cDirSep IS "/"><cfset x2 = FileSetAccessmode(#sFile#, 777) /></cfif> --->
 
-<!--- Is this an Excel File? BEGIN --->
+<!--- Is this an Excel or a CSV File? BEGIN --->
 <cfif bExcel IS 1>
+	<!--- It's an Excel File --->
 	<cfset iRow = 1 />
 	<cfset iCol = 1 />
 	<cfset bDone = 1 />
-	<cfset qExcel = QueryNew("field1, field2, field3, field4")>
+	<cfset qExcel = QueryNew("field1, field2, field3, field4, field5, field6")>
 	<cftry>
+		<!--- Create en Excel Object and read the Excel doscument into a Query Object --->
 		<cfset xlsObj = SpreadsheetRead('#sFile#',0) />
 		<cfset bDummy = IsSpreadsheetobject(xlsObj) />
 		<cfloop condition="bDone EQUAL 1">
 			<cfset newRow = QueryAddRow(qExcel, 1)>
-			<cfloop from="1" to="4" index="iCol">
+			<cfloop from="1" to="6" index="iCol">
 				<cfset sVal = SpreadsheetGetcellvalue(xlsObj, iRow, iCol) />
 				<cfif Trim(sVal) IS NOT "" or sVal IS NOT NULL>
 					<cfif Trim(sVal) IS ""><cfbreak></cfif>
@@ -87,51 +87,62 @@
 			<!--- <cfif Trim(sVal) IS NOT "" OR bDone IS 1><cfset newRow = QueryAddRow(qExcel, 1)></cfif>--->
 			<cfif bDone IS 0><cfbreak><cfelse><cfset iRow = iRow + 1 /></cfif>
 		</cfloop>
-		<!--- Change the file extention from .xls to .tmp and generate the CSV File --->
-		<cfset oFile = FileOpen(ReplaceNoCase(sFile, ".xls", ".tmp", "ALL"),"write")>
-		<cfoutput query="qExcel">
-			<cfif Trim(qExcel.field1) IS NOT ""><cfset sDummy = FileWriteline(oFile, "#Trim(qExcel.field1)#;#Trim(qExcel.field2)#;#Trim(qExcel.field3)#;#Trim(qExcel.field4)#")></cfif>
-		</cfoutput>
-		<cfset bDummy = FileClose(oFile)>
+
+		<!--- Delete Content in the OTR_CUST_APPL_TBS table --->
+		<cfquery name="qDeleteTBS" datasource="#Application.datasource#">
+			delete from OTR_CUST_APPL_TBS
+		</cfquery>
+		<!--- Load the OTR_CUST_APPL_TBS Table from Excel --->
+		<cfloop query="qExcel">
+			<cfif Trim(qExcel.field1) IS NOT "">
+				<cfquery name="qTBSload" datasource="#Application.datasource#">
+					insert into OTR_CUST_APPL_TBS
+						(CUST_ID, CUST_APPL_ID, DB_NAME, DB_TBS_NAME, THRESHOLD_WARNING, THRESHOLD_CRITICAL)
+					values ('#Trim(qExcel.field1)#','#Trim(qExcel.field2)#','#Trim(qExcel.field3)#','#Trim(qExcel.field4)#',#Int(qExcel.field5)#,#Int(qExcel.field6)#)
+				</cfquery>
+			</cfif>
+		</cfloop>
 		<!--- Delete the .xls File --->
 		<cfset b = FileDelete('#sFile#') />
-		<!--- Change file extention back to the .tmp --->
-		<cfset sFile = ReplaceNoCase(sFile, ".xls", ".tmp", "ALL")>
+
 		<cfcatch type="any">
 			<cfdump var="#cfcatch#">
 			<cfdump var="#xlsObj#">
 		</cfcatch>
 	</cftry>
+<cfelse>
+	<!--- It's a CSV File --->
+	<cftry>
+		<cfset sCSVfile = FileRead(#sFile#) />
+		<cfset args = {
+			string	: "#sCSVfile#",
+			headerline : false,
+			delimiter : ";"
+		} />
+		<cfset qCSV = csvread(ArgumentCollection = args) />
+
+		<!--- Delete Content in the OTR_CUST_APPL_TBS table --->
+		<cfquery name="qDeleteTBS" datasource="#Application.datasource#">
+			delete from OTR_CUST_APPL_TBS
+		</cfquery>
+		<!--- Load the OTR_CUST_APPL_TBS Table from Excel --->
+		<cfloop query="qCSV">
+			<cfif Trim(qCSV.Column1) IS NOT "">
+				<cfquery name="qTBSload" datasource="#Application.datasource#">
+					insert into OTR_CUST_APPL_TBS
+						(CUST_ID, CUST_APPL_ID, DB_NAME, DB_TBS_NAME, THRESHOLD_WARNING, THRESHOLD_CRITICAL)
+					values ('#Trim(qCSV.Column1)#','#Trim(qCSV.Column2)#','#Trim(qCSV.Column3)#','#Trim(qCSV.Column4)#',#Int(qCSV.Column5)#,#Int(qCSV.Column6)#)
+				</cfquery>
+			</cfif>
+		</cfloop>
+		<!--- Delete the .csv File --->
+		<cfset b = FileDelete('#sFile#') />
+
+		<cfcatch type="any">
+			<cfdump var="#cfcatch#">
+			<!--- <cfdump var="#xlsObj#"> --->
+		</cfcatch>
+	</cftry>
 </cfif>
-<!--- Is this an Excel File ?? END --->
-
-<!--- Make sure the file is in UNIX Format --->
-<cfif cDirSep IS "/"><cfexecute name="#application.UXdos2unix#" arguments="#sFile#" timeout="10"></cfexecute></cfif>
-<cfif cDirSep IS "\"><cfexecute name="#application.WINdos2unix#" arguments="#sFile#" timeout="10"></cfexecute></cfif>
-<!--- <cfabort> --->
-<!--- Use SFTP to transfer the, uploaded or generated from .xls, CSV File under user Oracle and with extention .DAT
-      This is used as an External Table in Oracle. --->
-<cfscript>
-    fso = CreateObject("java", "org.apache.commons.vfs.FileSystemOptions").init(); 
-    CreateObject("java", "org.apache.commons.vfs.provider.sftp.SftpFileSystemConfigBuilder").getInstance().setStrictHostKeyChecking(fso, "no"); 
-	Selectors = CreateObject("java", "org.apache.commons.vfs.Selectors");
-
-    fsManager = CreateObject("java", "org.apache.commons.vfs.VFS").getManager(); 
-
-    uri = "sftp://#sftpUser#:#sftpPass#@#sftpHost##application.ogc_external_table#/OTR_CUST_APPL_TBS_XT.DAT"; 
-
-    fo = fsManager.resolveFile(uri, fso); 
-    lfo = fsManager.resolveFile("#sFile#"); 
-
-	fo.copyFrom(lfo, Selectors.SELECT_SELF);
-		
-    lfo.close();
-	fs = fo.getFileSystem();
-	
-    fsManager.closeFileSystem(fs); 
-</cfscript> 
-
-<!--- Delete the file with extention .tmp --->
-<cfset b = FileDelete('#sFile#') />
-
+<!--- Is this an Excel or a CSV File ?? END --->
 <cflocation url="otr_tbs.cfm" addtoken="No">
