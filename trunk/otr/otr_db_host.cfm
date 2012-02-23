@@ -142,32 +142,41 @@ function confirmation(txt, url) {
 		<cfset s.password     = "#sPassword#" />
 		<cfset s.port         = "#qHostInstances.db_port#" />
 
-		<cfif DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
-			<cfset DataSourceDelete( "#UCase(qHostInstances.db_name)#temp" ) />
-		</cfif>
-		<cfif NOT DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
-			<cfset DataSourceCreate( "#UCase(qHostInstances.db_name)#temp", s ) />
-		</cfif>
-		<cfquery name="qDBversion" datasource="#UCase(qHostInstances.db_name)#temp">
-		select SUBSTRB (SUBSTR (b.banner, INSTR (b.banner, 'Release') + 8, 10), 1, 10) VERSION
-		  from SYS.v_$version b
-		 WHERE INSTR (UPPER (b.banner), 'ORACLE') > 0
-	       	   AND (   INSTR (UPPER (b.banner), 'ENTERPRISE') > 0
-                    OR (   INSTR (UPPER (b.banner), 'ORACLE9I') > 0
-                        OR (   INSTR (UPPER (b.banner), 'ORACLE8I') > 0
-                            OR INSTR (UPPER (b.banner), 'DATABASE') > 0
-                           )
-                       )
-                  )
-		</cfquery>
+		<cftry>
+			<cfif DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
+				<cfset DataSourceDelete( "#UCase(qHostInstances.db_name)#temp" ) />
+			</cfif>
+			<cfif NOT DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
+				<cfset DataSourceCreate( "#UCase(qHostInstances.db_name)#temp", s ) />
+			</cfif>
+			<cfquery name="qDBversion" datasource="#UCase(qHostInstances.db_name)#temp">
+				select SUBSTRB(SUBSTR(b.banner, INSTR (b.banner, 'Release') + 8, 10), 1, 10) VERSION
+				  from SYS.v_$version b
+				 where INSTR(UPPER(b.banner), 'ORACLE') > 0
+		       	   and (INSTR(UPPER(b.banner), 'ENTERPRISE') > 0
+    	                or (INSTR(UPPER(b.banner), 'ORACLE9I') > 0
+	                        or (INSTR(UPPER (b.banner), 'ORACLE8I') > 0
+	                            or INSTR(UPPER (b.banner), 'DATABASE') > 0
+	                           )
+    	                   )
+	                  )
+			</cfquery>
+			<cfset sVersion = qDBversion.version />
+			<cfif DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
+				<cfset DataSourceDelete( "#UCase(qHostInstances.db_name)#temp" ) />
+			</cfif>
+			<cfcatch type="database">
+				<cfset sVersion = "" />
+				<cfif DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
+					<cfset DataSourceDelete( "#UCase(qHostInstances.db_name)#temp" ) />
+				</cfif>
+			</cfcatch>
+		</cftry>
 	<tr<cfif qHostInstances.CurrentRow mod 2> class="alternate"</cfif>>
 		<td><cfoutput>#qHostInstances.db_host#</cfoutput></td>
 		<td><cfoutput>#qHostInstances.db_name#</cfoutput></td>
-		<td><cfoutput>#qDBversion.version#</cfoutput></td>
+		<td><cfoutput>#sVersion#</cfoutput></td>
 	</tr>
-		<cfif DataSourceIsValid("#UCase(qHostInstances.db_name)#temp")>
-			<cfset DataSourceDelete( "#UCase(qHostInstances.db_name)#temp" ) />
-		</cfif>
 	<cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') /></cfloop>
 	</tbody>
 	</table>
