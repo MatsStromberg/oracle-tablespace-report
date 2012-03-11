@@ -7,6 +7,47 @@ ACCEPT P_IDXFILE DEFAULT '/u01/oradata/otr_db/OTR' CHAR Prompt "Enter path for t
 prompt Password for SYS
 conn sys/&P_SYS_Password@&P_OTRDB as sysdba
 
+prompt
+prompt Choose the OTRREP user's Temporary tablespace.
+
+column db_default format a26 heading 'DB DEFAULT TEMP TABLESPACE'
+select t.tablespace_name, t.contents
+     , decode(dp.property_name,'DEFAULT_TEMP_TABLESPACE','*') db_default
+  from sys.dba_tablespaces t
+     , sys.database_properties dp
+ where t.contents           = 'TEMPORARY'
+   and t.status             = 'ONLINE'
+   and dp.property_name(+)  = 'DEFAULT_TEMP_TABLESPACE'
+   and dp.property_value(+) = t.tablespace_name
+ order by tablespace_name;
+
+prompt
+prompt Pressing <return> will result in the database's default Temporary 
+prompt tablespace (identified by *) being used.
+prompt
+
+ACCEPT temporary_tablespace CHAR Prompt "Enter Temporary TABLESPACE Name: "
+set heading off
+col temporary_tablespace new_value temporary_tablespace noprint
+select 'Using tablespace '||
+       nvl('&&temporary_tablespace',property_value)||
+       ' as OTRREP temporary tablespace.'
+     , nvl('&&temporary_tablespace',property_value) temporary_tablespace
+  from database_properties
+ where property_name='DEFAULT_TEMP_TABLESPACE';
+set heading on
+
+begin
+  if upper('&&temporary_tablespace') = 'SYSTEM' then
+    raise_application_error(-20101, 'Install failed - SYSTEM tablespace specified for TEMPORARY tablespace');
+  end if;
+end;
+/
+
+prompt
+prompt
+prompt ... Creating OTRREP user
+
 CREATE TABLESPACE "OTR_REP_DATA" 
     LOGGING 
     DATAFILE '&P_DATFILE/otr_rep_data01.dbf' SIZE 10M REUSE 
@@ -25,7 +66,7 @@ CREATE TABLESPACE "OTR_REP_INDX"
 
 REM Oracle Tablespace Reporting repository owner on central db (OTR) 
 CREATE USER OTRREP IDENTIFIED BY otrrep4otr
-  TEMPORARY TABLESPACE temp 
+  TEMPORARY TABLESPACE &&temporary_tablespace 
   DEFAULT TABLESPACE OTR_REP_DATA 
   QUOTA UNLIMITED ON OTR_REP_DATA;
 
