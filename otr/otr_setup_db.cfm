@@ -38,7 +38,7 @@
 		select distinct b.property_value
 		from mgmt_target_properties a, mgmt_target_properties b
 		where a.target_guid = b.target_guid
-		and   a.property_value = '<cfoutput>#Trim(qEM.DATABASE_NAME)#</cfoutput>'
+		and   UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qEM.DATABASE_NAME))#</cfoutput>'
 		and   b.property_name = 'Port'
 	</cfquery>
 
@@ -47,7 +47,7 @@
 		select distinct b.property_value
 		from mgmt_target_properties a, mgmt_target_properties b
 		where a.target_guid = b.target_guid
-		and   a.property_value = '<cfoutput>#Trim(qEM.DATABASE_NAME)#</cfoutput>'
+		and   UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qEM.DATABASE_NAME))#</cfoutput>'
 		and   b.property_name = 'MachineName'
 	</cfquery>
 
