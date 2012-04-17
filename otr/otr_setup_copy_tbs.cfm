@@ -26,12 +26,12 @@
 --->
 
 <!--- Update OTR_DB with Host name and Listener Port --->
+<!---
 <cfquery name="qDB" datasource="#Application.datasource#">
 	select DB_NAME
 	from OTR_DB
 	ORDER BY DB_NAME
 </cfquery>
-<!---
 <cfoutput query="qDB">
 	<!--- Get Listener Port --->
 	<cfquery name="qP" datasource="OTR_SYSMAN">
@@ -90,7 +90,7 @@
 			select distinct b.property_value
 			from mgmt_target_properties a, mgmt_target_properties b
 			where a.target_guid = b.target_guid
-			and   a.property_value = '<cfoutput>#Trim(qInstances.db_name)#</cfoutput>'
+			and   UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qInstances.db_name))#</cfoutput>'
 			and   b.property_name = 'Port'
 		</cfquery>
 
@@ -99,7 +99,7 @@
 			select distinct b.property_value
 			from mgmt_target_properties a, mgmt_target_properties b
 			where a.target_guid = b.target_guid
-			and   a.property_value = '<cfoutput>#Trim(qInstances.db_name)#</cfoutput>'
+			and   UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qInstances.db_name))#</cfoutput>'
 			and   b.property_name = 'MachineName'
 		</cfquery>
 
