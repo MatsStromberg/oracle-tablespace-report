@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -27,34 +27,56 @@
 
 
 <cfquery name="qEM" datasource="OTR_SYSMAN">
-	select distinct DATABASE_NAME
-	from SYSMAN.MGMT_DB_DBNINSTANCEINFO_ECM
-	ORDER BY DATABASE_NAME
+	select distinct database_name
+	from sysman.mgmt_db_dbninstanceinfo_ecm
+	order by database_name
 </cfquery>
 
 <cfloop query="qEM">
 	<!--- Get Listener Port --->
 	<cfquery name="qPort" datasource="OTR_SYSMAN">
 		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qEM.DATABASE_NAME))#</cfoutput>'
-		and   b.property_name = 'Port'
+		  from mgmt_target_properties a, mgmt_target_properties b
+		 where a.target_guid = b.target_guid
+		   and UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qEM.database_name))#</cfoutput>'
+		   and b.property_name = 'Port'
 	</cfquery>
 
 	<!--- Get Host server --->
 	<cfquery name="qHost" datasource="OTR_SYSMAN">
 		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qEM.DATABASE_NAME))#</cfoutput>'
-		and   b.property_name = 'MachineName'
+		  from mgmt_target_properties a, mgmt_target_properties b
+		 where a.target_guid = b.target_guid
+		   and UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qEM.database_name))#</cfoutput>'
+		   and b.property_name = 'MachineName'
 	</cfquery>
 
+	<!--- Check if it's a Cluster/RAC --->
+	<cfquery name="qRACcheck" datasource="OTR_SYSMAN">
+		select database_name, global_name
+		  from mgmt$db_dbninstanceinfo
+		 where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
+		   and target_type = 'oracle_database'
+	</cfquery>
+	<cfif qRACcheck.RecordCount GT 1>
+		<cfset bRAC = 1 />
+		<cfquery name="qServiceName" datasource="OTR_SYSMAN">
+			select distinct global_name
+			  from mgmt$db_dbninstanceinfo
+			 where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
+		</cfquery>
+		<cfset sServiceName = qServiceName.global_name />
+	<cfelse>
+		<cfset bRAC = 0 />
+		<cfset sServiceName = "" />
+	</cfif>
+	<cfset sHost = Trim(qHost.property_value) />
+
+
 	<cfquery name="qCreateDBs" datasource="#Application.datasource#">
-		insert into OTRREP.OTR_DB (DB_NAME, DB_ENV, DB_DESC, SYSTEM_PASSWORD, DB_HOST, DB_PORT)
-		VALUES ('<cfoutput>#qEM.DATABASE_NAME#</cfoutput>','SEE', '<cfoutput>#qEM.DATABASE_NAME#</cfoutput>', '',
-				'<cfoutput>#qHost.property_value#</cfoutput>', <cfoutput>#qPort.property_value#</cfoutput>)
+		insert into otrrep.otr_db (db_name, db_env, db_desc, system_password, db_host, db_port, db_rac, db_servicename)
+		values (<cfoutput>'#qEM.database_name#','SEE', '#qEM.database_name#', '',
+			'#qHost.property_value#', #qPort.property_value#, #bRAC#,'#sServiceName#'</cfoutput>)
 	</cfquery>
 </cfloop>
 

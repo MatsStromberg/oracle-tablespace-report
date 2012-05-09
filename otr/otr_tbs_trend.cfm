@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,28 +16,28 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true" />
-<cfquery name="qInstance" datasource="#application.datasource#">
+<cfquery name="qInstance" datasource="#Application.datasource#">
 	select db_name 
 	from otr_db 
 	order by db_name
 </cfquery>
 
-<cfquery name="qRepDate" datasource="#application.datasource#">
+<cfquery name="qRepDate" datasource="#Application.datasource#">
 	select rep_date 
 	from otr_space_rep_timestamps_v 
 	order by rep_date
 </cfquery>
 
-<cfquery name="qRepYear" datasource="#application.datasource#">
+<cfquery name="qRepYear" datasource="#Application.datasource#">
 	select extract(YEAR from rep_date) as rep_year
 	from otr_space_rep_timestamps_v 
 	group by extract(YEAR from rep_date)

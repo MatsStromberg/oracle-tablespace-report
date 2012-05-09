@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -31,42 +31,100 @@
 	<cfabort>
 </cfif>
 <cfquery name="qInstance" datasource="#application.datasource#">
-	select db_name, system_password 
+	select db_name, system_password, db_host, db_port, db_rac, db_servicename 
 	from otr_db 
-	where db_name = '#UCase(Trim(sOraSID))#'
+	where UPPER(db_name) = '#UCase(Trim(sOraSID))#'
 	order by db_name
 </cfquery>
 
 <cfset iDBErr = 0 />
 
 <cfif IsDefined("URL.check")>
-	<!--- Get Listener Port --->
-	<cfquery name="qPort" datasource="OTR_SYSMAN">
-		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   a.property_value = '#Trim(qInstance.db_name)#'
-		and   b.property_name = 'Port'
-	</cfquery>
-	<!--- Get Listener Port --->
-	<cfquery name="qHost" datasource="OTR_SYSMAN">
-		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   a.property_value = '#Trim(qInstance.db_name)#'
-		and   b.property_name = 'MachineName'
-	</cfquery>
+	<cfif Trim(qInstance.db_port) IS "">
+		<!--- Get Listener Port --->
+		<cfquery name="qPort" datasource="OTR_SYSMAN">
+			select distinct b.property_value
+			  from mgmt_target_properties a, mgmt_target_properties b
+			 where a.target_guid = b.target_guid
+			   and UPPER(a.property_value) = '#Trim(UCase(qInstance.db_name))#'
+			   and b.property_name = 'Port'
+		</cfquery>
+		<cfset iPort = qPort.property_value />
+	<cfelse>
+		<cfset iPort = qInstance.db_port />
+	</cfif>
+	<cfif Trim(qInstance.db_host) IS "">
+		<!--- Get Host --->
+		<cfquery name="qHost" datasource="OTR_SYSMAN">
+			select distinct b.property_value
+			from mgmt_target_properties a, mgmt_target_properties b
+			where a.target_guid = b.target_guid
+			and   UPPER(a.property_value) = '#Trim(UCase(qInstance.db_name))#'
+			and   b.property_name = 'MachineName'
+		</cfquery>
+		<!--- Check if it's a Cluster/RAC --->
+		<cfquery name="qRACcheck" datasource="OTR_SYSMAN">
+			select database_name, global_name
+			  from MGMT$DB_DBNINSTANCEINFO 
+			 where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#' 
+			   and target_type = 'oracle_database'
+		</cfquery>
+		<cfif qRACcheck.RecordCount GT 1>
+			<cfset bRAC = 1 />
+	                <cfquery name="qServiceName" datasource="OTR_SYSMAN">
+        	                select distinct global_name
+	                          from MGMT$DB_DBNINSTANCEINFO
+	                         where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
+	                </cfquery>
+			<cfset sServiceName = qServiceName.global_name />
+		<cfelse>
+			<cfset bRAC = 0 />
+		</cfif>
+		<cfset sHost = Trim(qHost.property_value) />
+	<cfelse>
+                <!--- Check if it's a Cluster/RAC --->
+                <cfquery name="qRACcheck" datasource="OTR_SYSMAN">
+                        select database_name, global_name
+                          from MGMT$DB_DBNINSTANCEINFO
+                         where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
+                           and target_type = 'oracle_database'
+                </cfquery>
+                <cfif qRACcheck.RecordCount GT 1>
+                        <cfset bRAC = 1 />
+                        <cfquery name="qServiceName" datasource="OTR_SYSMAN">
+                                select distinct global_name
+                                  from MGMT$DB_DBNINSTANCEINFO
+                                 where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
+                        </cfquery>
+                        <cfset sHost = Trim(qInstance.db_host) />
+			<cfif Trim(qInstance.db_servicename) IS "">
+	                        <cfset sServiceName = qServiceName.global_name />
+			<cfelse>
+				<cfset sServiceName = Trim(qInstance.db_servicename) />
+			</cfif>
+                <cfelse>
+                        <cfset bRAC = 0 />
+			<cfset sHost = Trim(qInstance.db_host) />
+			<cfset bRAC = 0 />
+		</cfif>
+	</cfif>
 
 	<!--- Decrypt the SYSTEM Password --->
 	<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstance.system_password)) />
 	<!--- Create Temporary Data Source --->
 	<cfset s = StructNew() />
-	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHost.property_value)#:#qPort.property_value#:#UCase(qInstance.db_name)#" />
+	<cfif bRAC IS 1>
+		<!--- RAC uses hostname:port/service_name --->
+		<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(sServiceName)#" />
+	<cfelse>
+		<!--- Single Instance uses hostname:port:SID --->
+		<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qInstance.db_name)#" />
+	</cfif>
 	<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 	<cfset s.databasename = "#UCase(qInstance.db_name)#" />
 	<cfset s.username     = "system" />
 	<cfset s.password     = "#sPassword#" />
-	<cfset s.port         = "#qPort.property_value#" />
+	<cfset s.port         = "#iPort#" />
 
 	<cfif DataSourceIsValid("#UCase(qInstance.db_name)#temp")>
 		<cfset DataSourceDelete( "#UCase(qInstance.db_name)#temp" ) />

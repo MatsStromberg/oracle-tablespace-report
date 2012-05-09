@@ -25,58 +25,24 @@
     <http://www.gnu.org/licenses/>.
 --->
 
-<!--- Update OTR_DB with Host name and Listener Port --->
 <!---
-<cfquery name="qDB" datasource="#Application.datasource#">
-	select DB_NAME
-	from OTR_DB
-	ORDER BY DB_NAME
-</cfquery>
-<cfoutput query="qDB">
-	<!--- Get Listener Port --->
-	<cfquery name="qP" datasource="OTR_SYSMAN">
-		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   a.property_value = '#Trim(qDB.DB_NAME)#'
-		and   b.property_name = 'Port'
-	</cfquery>
-
-	<!--- Get Listener Port --->
-	<cfquery name="qH" datasource="OTR_SYSMAN">
-		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   a.property_value = '#Trim(qDB.DB_NAME)#'
-		and   b.property_name = 'MachineName'
-	</cfquery>
-
-	<cfquery name="qUpdateDBs" datasource="#Application.datasource#">
-		update OTRREP.OTR_DB 
-		   set DB_HOST = '#qH.property_value#', 
-		       DB_PORT = #qP.property_value#
-		 where DB_NAME = '#Trim(qDB.DB_NAME)#'
-	</cfquery>
-</cfoutput>
-
-<!--- Update OTR_CUST_APPL_TBS from OTR_CUST_APPL_TBS_XT --->
-<cfquery name="qOldTBS" datasource="#Application.datasource#">
-	select CUST_ID, CUST_APPL_ID, DB_NAME, DB_TBS_NAME
-	  from OTR_CUST_APPL_TBS_XT
-	order by DB_NAME, DB_TBS_NAME
-</cfquery>
-
-<cfoutput query="qOldTBS">
-	<cfquery name="qNewTBS" datasource="#Application.datasource#">
-		insert into OTR_CUST_APPL_TBS
-		 (CUST_ID, CUST_APPL_ID, DB_NAME, DB_TBS_NAME)
-		values ('#qOldTBS.CUST_ID#','#qOldTBS.CUST_APPL_ID#','#qOldTBS.DB_NAME#','#qOldTBS.DB_TBS_NAME#')
-	</cfquery>
-</cfoutput>
+	Scheduled Template picking up Tablespace Thresholds from each Target DB.
+	This template should be run once a day at around 19:00 - 20:00.
+	
+	Note: It will not pick up New Tablespaces since this has to be a manual 
+		  task. Someone has to decide to which customer a tablespace belongs to.
 --->
+<html>
+<head>
+<title>Update Tablespace Thresholds</title>
+</head>
+<body>
+	<h3>Update Tablespace Thresholds</h3>
+
 <!--- Pickup Thresholds from Target DB's --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select distinct a.db_name, b.system_password, b.db_host, b.db_port, b.db_rac, b.db_servicename
+	select distinct a.db_name, b.system_password, b.db_host, b.db_port, 
+					b.db_rac, b.db_servicename
 	  from otr_cust_appl_tbs a, otr_db b
 	 where UPPER(a.db_name) = UPPER(b.db_name)
 	order by a.db_name
@@ -149,31 +115,31 @@
 				update otr_cust_appl_tbs
 					set threshold_warning = #Int(qTHdefault.warning_value)#,
 					    threshold_critical = #Int(qTHdefault.critical_value)#
-				 where db_name = '#UCase(qInstances.db_name)#'
+				 where UPPER(db_name) = '#UCase(qInstances.db_name)#'
 			</cfquery>
 		</cfoutput>
 		<!--- Lookup all none-default Thresholds --->	
-		<cfquery name="qTH" datasource="#UCase(qInstances.db_name)#temp">
+		<cfquery name="qTHnonedefault" datasource="#UCase(qInstances.db_name)#temp">
 			select warning_value, critical_value, object_name
 			 from sys.dba_thresholds
 			where metrics_name like '%Tablespace Space Usage'
 			  and nvl(object_name,'-OTR-TBS-') <> '-OTR-TBS-'
 		</cfquery>
 		<!--- Update all none-defaull values --->
-		<cfoutput query="qTH">
+		<cfoutput query="qTHnonedefault">
 			<cfquery name="qUpdateNoneDefault" datasource="#Application.datasource#">
 				update otr_cust_appl_tbs
-					set threshold_warning = #Int(qTH.warning_value)#,
-					    threshold_critical = #Int(qTH.critical_value)#
-				 where db_name = '#UCase(qInstances.db_name)#'
-				   and db_tbs_name = '#qTH.object_name#'
+					set threshold_warning = #Int(qTHnonedefault.warning_value)#,
+					    threshold_critical = #Int(qTHnonedefault.critical_value)#
+				 where UPPER(db_name) = '#UCase(qInstances.db_name)#'
+				   and db_tbs_name = '#qTHnonedefault.object_name#'
 			</cfquery>
 		</cfoutput>
 		<cfcatch type="Database">
 			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 				<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
 			</cfif>
-			<cfset iDBErr = 1>
+			<cfset iDBErr = 1 />
 		</cfcatch>
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
@@ -181,4 +147,5 @@
 	</cftry>
 </cfloop>
 
-<cflocation url="/otr/otr_setup.cfm" addtoken="no" />
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -28,6 +28,10 @@
 <cfset cDirSep = FileSeparator() />
 <cfset sPath = ExpandPath('/') />
 <cfset sTemplatePath = GetDirectoryfrompath(GetBasetemplatePath()) />
+
+<!--- TODO: Fix a new way to load the OTR_CUST_APPL_TBS Table if it's empty! --->
+
+<!---
 <!--- Does the file exist ? If not it's a new Setup --->
 <cfif cDirSep IS "/">
 	<cfset sFileCheck = #Application.ogc_external_table# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
@@ -98,7 +102,7 @@
 			fs = fo.getFileSystem();
 		
 		    fsManager.closeFileSystem(fs); 
-	</cfscript> 
+		</cfscript> 
 
 		<!--- Delete the file with extention .tmp --->
 		<cfset b = FileDelete('#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#') />
@@ -110,9 +114,12 @@
 <cfelse>
 	<cfset sFile = FileRead('#sTemplatePath##cDirSep#OTR_CUST_APPL_TBS_XT.DAT') />
 </cfif>
+--->
+
 <!--- <cfset qParFile = csvread( string=sFile, headerline=False,delimiter=";") /> --->
 <cfquery name="qParFile" datasource="#Application.datasource#">
-	select * from otr_cust_appl_tbs_xt
+	select * from otr_cust_appl_tbs
+	order by db_name, db_tbs_name
 </cfquery>
 <!--- <cfset qParFile = csvread=args> --->
 <!--- Generate a New Excel file --->
@@ -122,14 +129,20 @@
 	<cfset bDummy = SpreadsheetSetcolumnwidth(xlsTBSobj,2,8000) />
 	<cfset bDummy = SpreadsheetSetcolumnwidth(xlsTBSobj,3,3500) />
 	<cfset bDummy = SpreadsheetSetcolumnwidth(xlsTBSobj,4,8500) />
+	<cfset bDummy = SpreadsheetSetcolumnwidth(xlsTBSobj,5,1500) />
+	<cfset bDummy = SpreadsheetSetcolumnwidth(xlsTBSobj,6,1500) />
+	<!---
+	<cfset bDummy = SpreadsheetQuerywrite (xlsTBSobj, qParFile, 'Tablespaces') />
+	--->
 	<cfoutput query="qParFile">
 	<cfset bDummy = SpreadsheetSetcellvalue (xlsTBSobj, '#qParFile.cust_id#', #qParFile.CurrentRow#, 1) />
 	<cfset bDummy = SpreadsheetSetcellvalue (xlsTBSobj, '#qParFile.cust_appl_id#', #qParFile.CurrentRow#, 2) />
 	<cfset bDummy = SpreadsheetSetcellvalue (xlsTBSobj, '#qParFile.db_name#', #qParFile.CurrentRow#, 3) />
 	<cfset bDummy = SpreadsheetSetcellvalue (xlsTBSobj, '#qParFile.db_tbs_name#', #qParFile.CurrentRow#, 4) />
+	<cfset bDummy = SpreadsheetSetcellvalue (xlsTBSobj, '#qParFile.threshold_warning#', #qParFile.CurrentRow#, 5) />
+	<cfset bDummy = SpreadsheetSetcellvalue (xlsTBSobj, '#qParFile.threshold_critical#', #qParFile.CurrentRow#, 6) />
 	</cfoutput>
-	<!--- <cfset bDummy = SpreadsheetWrite (xlsTBSobj, 'C:\Downloads\www\ogc\test.xls', true, 'n3tw0rk23')> --->
-	<!--- <cfset bDummy = SpreadsheetWrite (xlsTBSobj, '#sPath##cDirSep#otr_cust_tbs.xls', true) /> --->
+
 	<!--- Meta Info --->
 	<cfset stInfo = StructNew()>
 	<cfset bDummy = StructInsert(stInfo, "author", "#Application.excel_doc_info_author#") />
@@ -142,7 +155,7 @@
 	<cfset bDummy = StructInsert(stInfo, "company", "#Application.company#") />
 	<cfset bDummy = StructInsert(stInfo, "comments", "") />
 	<cfset bDummy = StructInsert(stInfo, "lastauthor", "#Application.excel_doc_info_lastauthor#") />
-	<!---<cfdump var="#stInfo#">--->
+
 	<cfset bDummy = SpreadsheetAddinfo(xlsTBSobj, stInfo) />
 	<!---
 	p2   structure - items include (author, category, subject, title, revision, description, manager, company, comments, lastauthor) 
@@ -242,6 +255,8 @@ function confirmation(txt, url) {
 		<th width="220" style="font-size: 9pt;font-weight: bold;">Application</th>
 		<th width="100" style="font-size: 9pt;font-weight: bold;">SID</th>
 		<th width="200" style="font-size: 9pt;font-weight: bold;">Tablespace</th>
+		<th width="90" style="font-size: 9pt;font-weight: bold;">Warning</th>
+		<th width="90" style="font-size: 9pt;font-weight: bold;">Critical</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -251,6 +266,8 @@ function confirmation(txt, url) {
 		<td>#qParFile.cust_appl_id#</td>
 		<td>#qParFile.db_name#</td>
 		<td>#qParFile.db_tbs_name#</td>
+		<td align="center">#qParFile.threshold_warning#</td>
+		<td align="center">#qParFile.threshold_critical#</td>
 	</tr></cfoutput>
 	</tbody>
 	</table>

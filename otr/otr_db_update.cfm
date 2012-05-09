@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -31,7 +31,13 @@ set db_name = <cfqueryparam value="#FORM.db_name#" cfsqltype="cf_sql_varchar" />
 	db_desc = <cfqueryparam value="#FORM.db_desc#" cfsqltype="cf_sql_varchar" />,
 	system_password = <cfqueryparam value="#Application.pw_hash.encryptOraPW(Trim(FORM.system_password))#" cfsqltype="cf_sql_varchar" />,
 	db_host = <cfqueryparam value="#FORM.db_host#" cfsqltype="cf_sql_varchar" />,
-	db_port = <cfqueryparam value="#FORM.db_port#" cfsqltype="cf_sql_integer" />
+	db_port = <cfqueryparam value="#FORM.db_port#" cfsqltype="cf_sql_integer" />,
+	<cfif IsDefined("FORM.db_rac")>
+		db_rac = <cfqueryparam value="#FORM.db_rac#" cfsqltype="cf_sql_integer" />,
+	<cfelse>
+		db_rac = 0,
+	</cfif>
+	db_servicename = <cfqueryparam value="#FORM.db_servicename#" cfsqltype="cf_sql_varchar" />
 where db_name = <cfqueryparam value="#FORM.old_db_name#" cfsqltype="cf_sql_varchar" />
 </cfquery>
 
