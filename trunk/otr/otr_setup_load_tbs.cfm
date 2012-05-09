@@ -25,110 +25,31 @@
     <http://www.gnu.org/licenses/>.
 --->
 
-<!--- Update OTR_DB with Host name and Listener Port --->
-<!---
-<cfquery name="qDB" datasource="#Application.datasource#">
-	select DB_NAME
-	from OTR_DB
-	ORDER BY DB_NAME
-</cfquery>
-<cfoutput query="qDB">
-	<!--- Get Listener Port --->
-	<cfquery name="qP" datasource="OTR_SYSMAN">
-		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   a.property_value = '#Trim(qDB.DB_NAME)#'
-		and   b.property_name = 'Port'
-	</cfquery>
-
-	<!--- Get Listener Port --->
-	<cfquery name="qH" datasource="OTR_SYSMAN">
-		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   a.property_value = '#Trim(qDB.DB_NAME)#'
-		and   b.property_name = 'MachineName'
-	</cfquery>
-
-	<cfquery name="qUpdateDBs" datasource="#Application.datasource#">
-		update OTRREP.OTR_DB 
-		   set DB_HOST = '#qH.property_value#', 
-		       DB_PORT = #qP.property_value#
-		 where DB_NAME = '#Trim(qDB.DB_NAME)#'
-	</cfquery>
-</cfoutput>
-
-<!--- Update OTR_CUST_APPL_TBS from OTR_CUST_APPL_TBS_XT --->
-<cfquery name="qOldTBS" datasource="#Application.datasource#">
-	select CUST_ID, CUST_APPL_ID, DB_NAME, DB_TBS_NAME
-	  from OTR_CUST_APPL_TBS_XT
-	order by DB_NAME, DB_TBS_NAME
-</cfquery>
-
-<cfoutput query="qOldTBS">
-	<cfquery name="qNewTBS" datasource="#Application.datasource#">
-		insert into OTR_CUST_APPL_TBS
-		 (CUST_ID, CUST_APPL_ID, DB_NAME, DB_TBS_NAME)
-		values ('#qOldTBS.CUST_ID#','#qOldTBS.CUST_APPL_ID#','#qOldTBS.DB_NAME#','#qOldTBS.DB_TBS_NAME#')
-	</cfquery>
-</cfoutput>
---->
 <!--- Pickup Thresholds from Target DB's --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select distinct a.db_name, b.system_password, b.db_host, b.db_port, b.db_rac, b.db_servicename
-	  from otr_cust_appl_tbs a, otr_db b
-	 where UPPER(a.db_name) = UPPER(b.db_name)
-	order by a.db_name
+	select distinct db_name, db_host, db_port, system_password, db_rac, db_servicename
+	  from otr_db
+	order by db_name
 </cfquery>
 
 <cfloop query="qInstances">
 	<cftry>
 		<cfoutput>#qInstances.db_name#</cfoutput><br />
-		
-		<cfif Trim(qInstances.db_port) IS "">
-			<!--- Get Listener Port --->
-			<cfquery name="qPort" datasource="OTR_SYSMAN">
-				select distinct b.property_value
-				from mgmt_target_properties a, mgmt_target_properties b
-				where a.target_guid = b.target_guid
-				and   UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qInstances.db_name))#</cfoutput>'
-				and   b.property_name = 'Port'
-			</cfquery>
-			<cfset iPort = #qPort.property_value# />
-		<cfelse>
-			<cfset iPort = #qInstances.db_port# />
-		</cfif>
-
-		<cfif Trim(qInstances.db_host) IS "">
-			<!--- Get Host server --->
-			<cfquery name="qHost" datasource="OTR_SYSMAN">
-				select distinct b.property_value
-				from mgmt_target_properties a, mgmt_target_properties b
-				where a.target_guid = b.target_guid
-				and   UPPER(a.property_value) = '<cfoutput>#Trim(UCase(qInstances.db_name))#</cfoutput>'
-				and   b.property_name = 'MachineName'
-			</cfquery>
-			<cfset sHost = #Trim(qHost.property_value)# />
-		<cfelse>
-			<cfset sHost = Trim(qInstances.db_host) />
-		</cfif>
 
 		<!--- Decrypt the SYSTEM Password --->
 		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
 		<cfif qInstances.db_rac IS 1>
-			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(qInstances.db_servicename)#" />
+                        <cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qInstances.db_host)#:#qInstances.db_port#/#UCase(qInstances.db_servicename)#" />
 		<cfelse>
-			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qInstances.db_name)#" />
+			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qInstances.db_host)#:#qInstances.db_port#:#UCase(qInstances.db_name)#" />
 		</cfif>
-		<!--- <cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHost.property_value)#:#qPort.property_value#:#UCase(qInstances.db_name)#" /> --->
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 		<cfset s.databasename = "#UCase(qInstances.db_name)#" />
 		<cfset s.username     = "system" />
 		<cfset s.password     = "#sPassword#" />
-		<cfset s.port         = "#iPort#" />
+		<cfset s.port         = "#qInstances.db_port#" />
 
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
@@ -136,6 +57,35 @@
 		<cfif NOT DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceCreate("#UCase(qInstances.db_name)#temp", s) />
 		</cfif>
+
+		<!--- Get all tablespaces except SYSTEM, SYSAUX, TEMP% and UNDO% --->
+		<cfquery name="qAllTBS" datasource="#UCase(qInstances.db_name)#temp">
+			select tablespace_name 
+			  from dba_tablespaces
+			 where tablespace_name NOT IN ('SYSTEM','SYSAUX')
+			   and tablespace_name NOT LIKE 'TEMP%'
+			   and tablespace_name NOT LIKE 'UNDO%'
+		</cfquery>
+		<!--- Lookup the first created customer --->
+		<cfquery name="qCust" datasource="#Application.datasource#">
+			select cust_id
+			  from otr_cust
+		</cfquery>
+		<!--- Lookup Application Info --->
+		<cfquery name="qApplID" datasource="#Application.datasource#">
+			select db_desc
+			  from otr_db
+			 where UPPER(db_name) = '#UCase(qInstances.db_name)#'
+		</cfquery>
+		<!--- Create Basis Tablespace Info for the Instance --->
+		<cfloop query="qAllTBS">
+			<cfquery name="qCreateTBS" datasource="#Application.datasource#">
+				insert into otr_cust_appl_tbs
+				       (cust_id, cust_appl_id, db_name, db_tbs_name)
+				       VALUES ('#qCust.cust_id#', '#qApplID.db_desc#', 
+				               '#UCase(qInstances.db_name)#', '#qAllTBS.tablespace_name#')
+			</cfquery>
+		</cfloop>
 		<!--- Lookup Default Threshold --->
 		<cfquery name="qTHdefault" datasource="#UCase(qInstances.db_name)#temp">
 			select warning_value, critical_value

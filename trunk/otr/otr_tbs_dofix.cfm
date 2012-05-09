@@ -1,3 +1,29 @@
+<!---
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    
+    Contributing Developers:
+    Mats Strömberg - ms@network23.net
+
+    This file is part of the Oracle Tablespace Report.
+
+    The Oracle Tablespace Report is free software: you can redistribute 
+    it and/or modify it under the terms of the GNU General Public License 
+    as published by the Free Software Foundation, either version 3 of the 
+    License, or (at your option) any later version.
+
+    The Oracle Tablespace Report is distributed in the hope that it will 
+    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+    General Public License for more details.
+	
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
+    
+    You should have received a copy of the GNU General Public License 
+    along with the Oracle Tablespace Report.  If not, see 
+    <http://www.gnu.org/licenses/>.
+--->
 <cfif IsDefined("URL.action")>
 	<cfswitch expression="#URL.action#">
 		<cfcase value="increase">
@@ -21,9 +47,9 @@
 
 <!--- Get the System Password --->
 <cfquery name="qGetDB" datasource="#application.datasource#">
-	select db_name, system_password
+	select db_name, system_password, db_host, db_port, db_rac, db_servicename
 	from otr_db 
-	where db_name = '#Trim(oraSID)#'
+	where UPPER(db_name) = '#Trim(UCase(oraSID))#'
 	order by db_name
 </cfquery>
 
@@ -34,32 +60,46 @@
 	<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qGetDB.system_password)) />
 </cfif>
 
-<!--- Get Listener Port --->
-<cfquery name="qPort" datasource="OTR_SYSMAN">
-	select distinct b.property_value
-	  from mgmt_target_properties a, mgmt_target_properties b
-	 where a.target_guid = b.target_guid
-	   and   a.property_value = '#Trim(oraSID)#'
-	   and   b.property_name = 'Port';
-</cfquery>
+<cfif Trim(qGetDB.db_port) IS "">
+	<!--- Get Listener Port --->
+	<cfquery name="qPort" datasource="OTR_SYSMAN">
+		select distinct b.property_value
+		  from mgmt_target_properties a, mgmt_target_properties b
+		 where a.target_guid = b.target_guid
+		   and   UPPER(a.property_value) = '#Trim(UCase(oraSID))#'
+		   and   b.property_name = 'Port';
+	</cfquery>
+	<cfset iPort = qPort.property_value />
+<cfelse>
+	<cfset iPort = qGetDB.db_port />
+</cfif>
 
-<!--- Get Host server --->
-<cfquery name="qHost" datasource="OTR_SYSMAN">
-	select distinct b.property_value
-	  from mgmt_target_properties a, mgmt_target_properties b
-	 where a.target_guid = b.target_guid
-	   and   a.property_value = '#Trim(oraSID)#'
-	   and   b.property_name = 'MachineName'
-</cfquery>
+<cfif Trim(qGetDB.db_host) IS "">
+	<!--- Get Host server --->
+	<cfquery name="qHost" datasource="OTR_SYSMAN">
+		select distinct b.property_value
+		  from mgmt_target_properties a, mgmt_target_properties b
+		 where a.target_guid = b.target_guid
+		   and   UPPER(a.property_value) = '#Trim(UCase(oraSID))#'
+		   and   b.property_name = 'MachineName'
+	</cfquery>
+	<cfset sHost = Trim(qHost.property_value) />
+<cfelse>
+	<cfset sHost = Trim(qGetDB.db_host) />
+</cfif>
 
 <!--- Create Temporary Data Source --->
 <cfset s = StructNew()>
-<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHost.property_value)#:#qPort.property_value#:#UCase(oraSID)#">
+<cfif qGetDB.db_rac IS 1>
+	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(qGetDB.db_servicename)#" />
+<cfelse>
+	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qGetDB.db_name)#" />
+</cfif>
 <cfset s.drivername   = "oracle.jdbc.OracleDriver">
 <cfset s.databasename = "#UCase(oraSID)#">
 <cfset s.username     = "system">
 <cfset s.password     = "#sPassword#">
-<cfset s.port         = "#qPort.property_value#">
+<cfset s.port         = "#iPort#">
 
 <cfif DataSourceIsValid("#UCase(oraSID)#temp")>
 	<cfset DataSourceDelete( "#UCase(oraSID)#temp" )>

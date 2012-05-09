@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -39,7 +39,7 @@
 	<td align="center" valign="top" width="100"><a href="otr_db_host.cfm" class="otrtip" title="<div align='center'>DB Instances and<br />the physical location...<br />The report lists the location<br />as of last <cfoutput>#LCase(Dayofweekasstring(Application.snapshot_day))#</cfoutput></div>" onfocus="this.blur();">DB Hosts</a></td>
 	<td align="center" valign="top" width="100"><a href="otr_tbs.cfm" class="otrtip" title="<div align='center'>Here you define the releationships<br />between Customers, Instances and<br />one or more Tablespace(s)</div>" onfocus="this.blur();">Tablespaces</a></td>
 	<td align="center" valign="top" width="100"><a href="otr_tbs_trend.cfm" class="otrtip" title="<div align='center'>Here you can see the Trend in<br />growth of the tablespace usage<br />as a Bar chart.<br /><img src=images/chart.png width=128 height=96 border=0 /></div>" onfocus="this.blur();">TBS Trend</a></td>
-	<cfif DayOfWeek(Now()) IS Application.snapshot_day><td align="center" valign="top" width="100"><a href="#" onclick="showHalgeDiv();" class="otrtip" title="<div align='center'>No manually generated<br />snapshots on a<br /><cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>!</div>" onfocus="this.blur();">New Snapshot</a></td><cfelse><td align="center" valign="top" width="100"><a href="#" onclick="showDiv(); makeDisableSubmit()" class="otrtip" title="<div align='center'>This will generate<br />a new snapshot with<br />todays date, containing<br />Tablespace and NFS<br />Storage usage.</div>" onfocus="this.blur();">New Snapshot</a></td></cfif>
+	<cfif DayOfWeek(Now()) IS Application.snapshot_day><td align="center" valign="top" width="100"><a href="#" onclick="showHalgeDiv();" class="otrtip" title="<div align='center'>No manually generated<br />snapshots on a<br /><cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>!</div>" onfocus="this.blur();">New Snapshot</a></td><cfelse><td align="center" valign="top" width="100"><a href="#" onclick="showDiv(); makeDisableSubmit()" class="otrtip" title="<div align='center'>This will generate a new snapshot with<br />todays date, containing Tablespace and<br />NFS or ASM Storage usage.</div>" onfocus="this.blur();">New Snapshot</a></td></cfif>
 	<td align="center" valign="top" width="100"><a href="otr_tbs_deletesnapshot.cfm" class="otrtip" title="<div align='center'>Delete a specific snapshot.<br />You can not delete <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput> snapshots</div>" onfocus="this.blur();">Del Snapshot</a></td>
 	<td align="center" valign="top" width="100"><a href="<cfoutput>#application.ogc_logon_url#</cfoutput>" target="_blank" class="otrtip" title="<div align='center'>This is a direct<br />Link to the Oracle<br />Enterprise Manager</div>" onfocus="this.blur();">Enterprise Manager</a></td>
 	<!---<td align="center" valign="top" width="200">Last Snapshot: <cfoutput>#DateFormat(qRepDateMax.rep_date, "dd.mm.yyyy")#</cfoutput></td>--->
@@ -47,6 +47,6 @@
 </tr>
 </table>
 <div id="loaderDiv" class="hideMe">&nbsp;</div>
-<div id="halgeDiv" class="hideMe">&nbsp;<div align="center" class="halgeHeading">No manually generated Snapshots on <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>! <div id="countDown"></div></div></div>
+<div id="halgeDiv" class="hideMe">&nbsp;<cfset dummy = SetLocale("English (United States)")><div align="center" class="halgeHeading">No manually generated Snapshots on <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>! <div id="countDown"></div></div><cfset dummy = SetLocale("#Application.locale_string#") /></div>
 <iframe frameborder="0" name="snapshot" id="snapshot" src="" width="0" height="0" scrolling="NO"></iframe>
 <br />

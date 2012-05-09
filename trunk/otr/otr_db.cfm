@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -27,7 +27,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
 <cfquery name="qInstances" datasource="#application.datasource#">
-	select db_name, db_env, db_desc, system_password, db_host, db_port 
+	select db_name, db_env, db_desc, system_password, db_host, db_port, db_rac
 	from otr_db 
 	order by db_name
 </cfquery>
@@ -116,6 +116,7 @@ function confirmation(txt, url) {
 		<th width="100" style="font-size: 8pt;font-weight: bold;">Environment</th>
 		<th width="140" style="font-size: 8pt;font-weight: bold;">Host</th>
 		<th width="50" style="font-size: 8pt;font-weight: bold;">Port</th>
+                <td width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
 		<td width="120" style="font-size: 8pt;font-weight: bold;">SYSTEM Password</td>
 		<td width="30" style="font-size: 8pt; font-weight: bold;">&nbsp;</td>
 		<td align="center" width="50" style="font-size: 8pt;font-weight: bold;">Edit</td>
@@ -134,6 +135,7 @@ function confirmation(txt, url) {
 		<td>&nbsp;</td>
 		<td>&nbsp;</td>
 		<td>&nbsp;</td>
+		<td>&nbsp;</td>
 		<td align="center"><a href="otr_db_new.cfm"><img src="images/btn_new.gif" alt="New" title="New" width="18" height="18" border="0"></a></td>
 	</tr></cfif>
 	<cfoutput query="qInstances"><tr<cfif qInstances.CurrentRow mod 2> class="alternate"</cfif>>
@@ -142,6 +144,7 @@ function confirmation(txt, url) {
 		<td style="font-size: 8pt;" class="otrtip" title="<cfif qInstances.db_env IS "SEE">Shared Enterprise Edition<cfelseif qInstances.db_env IS "DEE">Dedicated Enterprise Edition<cfelseif qInstances.db_env IS "DEV">Development Enterprise Edition<cfelseif qInstances.db_env IS "INT">Internal Enterprise Edition<cfelse>Shared Enterprise Edition</cfif>" style="cursor: help; text-align: center;">#qInstances.db_env#</td>
 		<td style="font-size: 8pt;">#qInstances.db_host#</td>
 		<td style="font-size: 8pt;">#qInstances.db_port#</td>
+		<td style="font-size: 8pt;"><img src="images/<cfif qInstances.db_rac IS 1>dbcluster.png" alt="Cluster-Database" title="Cluster-Database"<cfelse>database.png" alt="Database" title="Database"</cfif> width="16" height="16"></td>
 		<td style="font-size: 8pt;"><cfif Trim(qInstances.system_password) NEQ "">**********</cfif></td>
 		<td><cfif Trim(qInstances.system_password) NEQ ""><iframe src="otr_system_test.cfm?SID=#qInstances.db_name#" name="pwtest" id="pwtest" width="30" height="20" marginwidth="0" marginheight="0" scrolling="no" frameborder="0"></iframe><cfelse>&nbsp;</cfif></td>
 		<td align="center"><a href="otr_db_edit.cfm?db_name=#qInstances.db_name#"><img src="images/btn_edit.gif" alt="Edit" title="Edit" width="24" height="20" border="0"></a></td>

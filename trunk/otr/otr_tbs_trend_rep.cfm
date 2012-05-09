@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -32,10 +32,10 @@
 		  from otr_space_rep_v b, 
 			(select db_name, max(rep_date) rep_date_max  
 			   from otr_db_space_rep
-			  where db_name = '#FORM.db_name#'
+			  where UPPER(db_name) = '#UCase(FORM.db_name)#'
 			    and extract(YEAR from rep_date) = #FORM.year#
 		   group by db_name, to_char(rep_date, 'YYYY_MM')) a
-		 where a.db_name = b.db_name
+		 where UPPER(a.db_name) = UPPER(b.db_name)
 		   and a.rep_date_max = b.rep_date
 		   and extract(YEAR from b.rep_date) = #FORM.year#
 		order by db_name, db_tbs_name, rep_date
@@ -44,7 +44,7 @@
 	<cfquery name="qTrend" datasource="#application.datasource#">
 		select db_name, db_tbs_name, rep_date, db_tbs_real_used_mb, db_tbs_can_grow_mb, db_tbs_real_prc_used
 		 from otr_space_rep_v
-		where db_name = '#FORM.db_name#'
+		where UPPER(db_name) = '#UCase(FORM.db_name)#'
 		  and   db_tbs_name not IN ('SYSTEM','SYSAUX','TEMP','UNDO','UNDOTBS1')
 		  and   trunc(rep_date) between trunc(to_date('#form.from_date#','DD-MM-YYYY')) and trunc(to_date('#FORM.to_date#','DD-MM-YYYY'))
 		group by db_name, db_tbs_name, rep_date, db_tbs_real_used_mb, db_tbs_can_grow_mb, db_tbs_real_prc_used

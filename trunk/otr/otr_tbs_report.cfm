@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -38,39 +38,38 @@
 </cfif>
 <cfif NOT IsDefined("FORM.rep_date")><cflocation url="index.cfm" addtoken="No"></cfif>
 <cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">
-	<cfquery name="qRepClient" datasource="#application.datasource#">
+	<cfquery name="qRepClient" datasource="#Application.datasource#">
 		select cust_id, cust_name 
 		  from otr_cust 
-		 where cust_id = '#FORM.rep_cust#'
+		 where UPPER(cust_id) = '#UCase(FORM.rep_cust)#'
 		order by cust_name
 	</cfquery>
 </cfif>
 
-<cfquery name="qReport" datasource="#application.datasource#">
+<cfquery name="qReport" datasource="#Application.datasource#">
 	select distinct a.db_name, b.cust_appl_id, b.cust_id, a.db_tbs_name, trunc(a.rep_date) as rep_date, a.db_tbs_used_mb, a.db_tbs_free_mb, 
     	   a.db_tbs_can_grow_mb, a.db_tbs_max_free_mb, a.db_tbs_prc_used, a.db_tbs_real_prc_used
 	  from otr_db_space_rep a, otr_cust_appl_db_tbs_v b
-	 where a.db_name = b.db_name
+	 where UPPER(a.db_name) = UPPER(b.db_name)
 	   and   a.db_tbs_name = b.db_tbs_name
-	<cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">and   b.cust_id = '#Trim(FORM.rep_cust)#'</cfif>
+	<cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">and   UPPER(b.cust_id) = '#Trim(UCase(FORM.rep_cust))#'</cfif>
 	<cfif qDev IS 0>and   b.db_env <> 'DEV'</cfif>
 	<cfif qInt IS 0>and   b.db_env <> 'INT'</cfif>
 	   and   trunc(a.rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
 	order by trunc(a.rep_date), a.db_name, a.db_tbs_name
 </cfquery>
 
-<cfquery name="qReportLinks" datasource="#application.datasource#">
+<cfquery name="qReportLinks" datasource="#Application.datasource#">
     select distinct a.db_name, trunc(a.rep_date) as rep_date
 	  from otr_db_space_rep a, otr_cust_appl_db_tbs_v b
-	 where a.db_name = b.db_name
+	 where UPPER(a.db_name) = UPPER(b.db_name)
 	   and   a.db_tbs_name = b.db_tbs_name
-	<cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">and   b.cust_id = '#Trim(FORM.rep_cust)#'</cfif>
+	<cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">and   UPPER(b.cust_id) = '#TrimUCase((FORM.rep_cust))#'</cfif>
 	<cfif qDev IS 0>and   b.db_env <> 'DEV'</cfif>
 	<cfif qInt IS 0>and   b.db_env <> 'INT'</cfif>
 	   and   trunc(a.rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
 	order by trunc(a.rep_date), a.db_name
 </cfquery>
-
 <!--- Generate Excel File --->
 <cfset cDirSep = FileSeparator() />
 <cfset sPath = ExpandPath('/') />
@@ -154,6 +153,14 @@
 <cfset nfsSubFreeSum = 0 />
 <cfset nfsTotFreeSum = 0 />
 <cfset showNFSsum = 0 />
+<!--- ASM Sum --->
+<cfset asmSubUsedSum = 0 />
+<cfset asmTotUsedSum = 0 />
+<cfset asmSubFreeSum = 0 />
+<cfset asmTotFreeSum = 0 />
+<cfset asmSubTotalSum = 0 />
+<cfset asmTotTotalSum = 0 />
+<cfset showASMsum = 0 />
 
 <cfset iRow = 0 />
 	<cfcatch type="Any">
@@ -166,7 +173,7 @@
 	<cfset xlsObj = SpreadsheetRead('#sTemplatePath##cDirSep#excel#cDirSep#customer_template.xls',0) />
 	<cfset iRow = iRow + 1 />
 	<!--- Output Header on the first line --->
-	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#application.company# - Oracle Tablespace Reports', #iRow#, 1) />
+	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Application.company# - Oracle Tablespace Report', #iRow#, 1) />
 	<cfset iRow = iRow + 1 />
 	<cfset iRow = iRow + 1 />
 	<cfset sHeadDate = "" & DateFormat(FORM.rep_date,"dd.mm.yyyy") />
@@ -221,14 +228,14 @@
 		<!--- Output Sub Total --->
 		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, 'Sub Total (MB):', #iRow#, 1) />
 		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, #nSubSum#, #iRow#, 2) />
-		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, #nSubCanGrowToSum#, #iRow#, 4) />
+		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, #Round(nSubCanGrowToSum)#, #iRow#, 4) />
 		<!--- Make this row Bold and Right Adjusted --->
 		<cfset bDummy = SpreadsheetFormatRow(xlsObj, #stBoldRight10#, #iRow#) />
 
-		<cfquery name="qNFSrep" datasource="#application.datasource#">
+		<cfquery name="qNFSrep" datasource="#Application.datasource#">
 			select * 
 			from otr_nfs_space_rep
-			where db_name = '#qReport.db_name#'
+			where UPPER(db_name) = '#UCase(qReport.db_name)#'
 			and   trunc(rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
 			order by trunc(rep_date), db_name, mountpoint
 		</cfquery>
@@ -246,11 +253,11 @@
 			<!--- Calcuate NFS Sub and Grand Total --->
 			<cfset nfsSubSum = nfsSubSum + qNFSrep.nfs_mb_total />
 			<cfset nfsSubFreeSum = nfsSubFreeSum + qNFSrep.nfs_mb_free />
-			<cfset nfsTotSum = nfsTotSum + nfsSubSum />
-			<cfset nfsTotFreeSum = nfsTotFreeSum + nfsSubFreeSum />
 			<cfset iRow = iRow + 1 />
 			<cfset showNFSsum = 1 />
 		</cfoutput>
+		<cfset nfsTotSum = nfsTotSum + nfsSubSum />
+		<cfset nfsTotFreeSum = nfsTotFreeSum + nfsSubFreeSum />
 		<!--- Output NFS Sub Total --->
 		<cfif showNFSsum>
 			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(nfsSubSum)#', #iRow#, 4) />
@@ -261,9 +268,62 @@
 			<cfset showNFSsum = 0 />
 		</cfif>
 
+		<cfquery name="qASMrep" datasource="#Application.datasource#">
+			select * 
+			from otr_asm_space_rep
+			where UPPER(db_name) = '#UCase(qReport.db_name)#'
+			and   trunc(rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
+			order by trunc(rep_date), db_name, dg_name
+		</cfquery>
+		<cfif qASMrep.RecordCount IS NOT 0><cfset iRow = iRow + 2 /></cfif>
+
+		<cfset bDummy = SpreadsheetSetCellValue(xlsObj, 'Disk Group', #iRow#, 1) />
+		<cfset bDummy = SpreadsheetSetCellValue(xlsObj, 'Used (MB)', #iRow#, 2) />
+		<cfset bDummy = SpreadsheetSetCellValue(xlsObj, 'Free (MB)', #iRow#, 3) />
+		<cfset bDummy = SpreadsheetSetCellValue(xlsObj, 'Total (MB)', #iRow#, 4) />
+		<cfset bDummy = SpreadsheetSetCellValue(xlsObj, '% Used', #iRow#, 6) />
+		<!--- Make this row Bold and Right adjusted --->
+		<cfset bDummy = SpreadsheetFormatRow(xlsObj, #stBoldRight10#, #iRow#) />
+		<!--- Make the first Cell in this row Bold and Left adjusted --->
+		<cfset bDummy = SpreadsheetFormatCell(xlsObj, #stBold10#, #iRow#, 1) />
+		<cfset iRow = iRow + 1 />
+
+		<!--- Output ASM Space Usage --->
+		<cfoutput query="qASMrep">
+			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, 'Disk Group: #qASMrep.dg_name#', #iRow#, 1) />
+			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(qASMrep.asm_mb_used)#', #iRow#, 2) />
+			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(qASMrep.asm_mb_free)#', #iRow#, 3) />
+			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#qASMrep.asm_mb_total#', #iRow#, 4) />
+			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#(qASMrep.asm_prc_used/100)#', #iRow#, 6) />
+			<!--- Make Column 2 Right Adjusted --->
+			<cfset bDummy = SpreadsheetFormatCell(xlsObj, #stNormal10#, #iRow#, 2) />
+			<!--- Calcuate NFS Sub and Grand Total --->
+			<cfset asmSubUsedSum = asmSubUsedSum + qASMrep.asm_mb_used />
+			<cfset asmSubFreeSum = asmSubFreeSum + qASMrep.asm_mb_free />
+			<cfset asmSubTotalSum = asmSubTotalSum + qASMrep.asm_mb_total />
+			<cfset iRow = iRow + 1 />
+			<cfset showASMsum = 1 />
+		</cfoutput>
+		<cfset asmTotUsedSum = asmTotUsedSum + asmSubUsedSum />
+		<cfset asmTotFreeSum = asmTotFreeSum + asmSubFreeSum />
+		<cfset asmTotTotalSum = asmTotTotalSum + asmSubTotalSum />
+		<!--- Output ASM Sub Total --->
+		<cfif showASMsum>
+			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(asmSubUsedSum)#', #iRow#, 2) />
+			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(asmSubFreeSum)#', #iRow#, 3) />
+			<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(asmSubTotalSum)#', #iRow#, 4) />
+			<!--- Make this row Bold and Right Adjusted --->
+			<cfset bDummy = SpreadsheetFormatRow(xlsObj, #stBoldRight10#, #iRow#) />
+			<cfset iRow = iRow + 1 />
+			<cfset showNFSsum = 0 />
+		</cfif>
+
 		<!--- Calculate the Total Sum --->
 		<cfset nfsSubSum = 0 />
 		<cfset nfsSubFreeSum = 0 />
+		<cfset asmSubUsedSum = 0 />
+		<cfset asmSubFreeSum = 0 />
+		<cfset asmSubTotalSum = 0 />
 		<cfset nTotSum = nTotSum + nSubSum />
 		<cfset nSubSum = 0 />
 		<cfset nTotCanGrowToSum = nTotCanGrowToSum + nSubCanGrowToSum />
@@ -273,19 +333,31 @@
 	<cfset iRow = iRow + 1 />
 	<!--- Output the Grand Total for DB Space Usage --->
 	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, 'Total DB Space Used (MB):', #iRow#, 1) />
-	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, #nTotSum#, #iRow#, 2) />
-	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, #nTotCanGrowToSum#, #iRow#, 4) />
+	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, #Round(nTotSum)#, #iRow#, 2) />
+	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, #Round(nTotCanGrowToSum)#, #iRow#, 4) />
 	<!--- Make this row Bold and Right Adjusted --->
 	<cfset bDummy = SpreadsheetFormatRow(xlsObj, #stBoldRight10#, #iRow#) />
 
-	<cfset iRow = iRow + 2 />
-	<!--- Output the Grand Total for NFS Space Usage --->
-	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, 'Total NFS Space Used (MB):', #iRow#, 1) />
-	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(nfsTotSum)#', #iRow#, 4) />
-	<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(nfsTotFreeSum)#', #iRow#, 5) />
-	<!--- Make this row Bold and Right Adjusted --->
-	<cfset bDummy = SpreadsheetFormatRow(xlsObj, #stBoldRight10#, #iRow#) />
+	<cfif qNFSrep.RecordCount GT 0>
+		<cfset iRow = iRow + 2 />
+		<!--- Output the Grand Total for NFS Space Usage --->
+		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, 'Total NFS Space Used (MB):', #iRow#, 1) />
+		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(nfsTotSum)#', #iRow#, 4) />
+		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(nfsTotFreeSum)#', #iRow#, 5) />
+		<!--- Make this row Bold and Right Adjusted --->
+		<cfset bDummy = SpreadsheetFormatRow(xlsObj, #stBoldRight10#, #iRow#) />
+	</cfif>
 
+	<cfif qASMrep.RecordCount GT 0>
+		<cfset iRow = iRow + 2 />
+		<!--- Output the Grand Total for ASM Space Usage --->
+		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, 'Total ASM Space Used (MB):', #iRow#, 1) />
+		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(asmTotUsedSum)#', #iRow#, 2) />
+		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(asmTotFreeSum)#', #iRow#, 3) />
+		<cfset bDummy = SpreadsheetSetcellvalue(xlsObj, '#Round(asmTotTotalSum)#', #iRow#, 4) />
+		<!--- Make this row Bold and Right Adjusted --->
+		<cfset bDummy = SpreadsheetFormatRow(xlsObj, #stBoldRight10#, #iRow#) />
+	</cfif>
 	<!--- Save the Excel File under the name of customer_report.xls (For Excel 97 - 2003) --->
 	<cfset bDummy = SpreadsheetWrite (xlsObj, '#sTemplatePath##cDirSep#excel#cDirSep#customer_report.xls', true) />
 	<cfcatch type="any">
@@ -308,11 +380,19 @@
 <cfset nfsSubFreeSum = 0 />
 <cfset nfsTotFreeSum = 0 />
 <cfset showNFSsum = 0 />
+<!--- ASM Sum --->
+<cfset asmSubUsedSum = 0 />
+<cfset asmTotUsedSum = 0 />
+<cfset asmSubFreeSum = 0 />
+<cfset asmTotFreeSum = 0 />
+<cfset asmSubTotalSum = 0 />
+<cfset asmTotTotalSum = 0 />
+<cfset showASMsum = 0 />
 
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
-	<title><cfoutput>#application.company#</cfoutput> - Oracle Tablespace Reports</title>
+	<title><cfoutput>#Application.company#</cfoutput> - Oracle Tablespace Report</title>
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
 <!--
@@ -401,8 +481,8 @@ function submitForm() {
 <cfinclude template="_top_menu.cfm">
 <br />
 <div align="center">
-<h2><cfoutput>#application.company#</cfoutput> - Oracle Tablespace Reports</h2>
-<h3><cfoutput>#DateFormat(FORM.rep_date,"dd.mm.yyyy")#<cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT ""> - #qRepClient.cust_name#</cfif></cfoutput></h3>
+<h2><cfoutput>#Application.company#</cfoutput> - Oracle Tablespace Report</h2>
+<h3><cfoutput>#LSDateFormat(DateFormat(FORM.rep_date,"dd.mm.yyyy"), 'short')#<cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT ""> - #qRepClient.cust_name#</cfif></cfoutput></h3>
 <cfoutput query="qReportLinks"><a href="###qReportLinks.db_name#" onFocus="this.blur();">#qReportLinks.db_name#</a> </cfoutput>
 </div>
 <div align="center">
@@ -431,12 +511,12 @@ function submitForm() {
 </tr>
 <cfoutput><tr<cfif qReport.CurrentRow mod 2> class="alternate"</cfif>>
 	<td width="200">#qReport.db_tbs_name#</td>
-	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_used_mb,"999,999")#<cfset nSubSum = nSubSum + qReport.db_tbs_used_mb /></td>
-	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_free_mb,"999,999.99")#</td>
-	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_can_grow_mb,"999,999")#<cfset nSubCanGrowToSum = nSubCanGrowToSum + qReport.db_tbs_can_grow_mb /></td>
-	<td width="120" align="right">#LSNumberFormat(qReport.db_tbs_max_free_mb,"999,999.99")#</td>
-	<td width="120" align="right" class="otrtip" title="#LsNumberFormat(qReport.db_tbs_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_prc_used),"999")# %</td>
-	<td width="120" align="right" class="otrtip" title="#LsNumberFormat(qReport.db_tbs_real_prc_used,"999.09")# %" style="cursor:help;">#LsNumberFormat(round(qReport.db_tbs_real_prc_used),"999")# %</td>
+	<td width="120" style="text-align: right;">#LSNumberFormat(qReport.db_tbs_used_mb,"999,999")#<cfset nSubSum = nSubSum + qReport.db_tbs_used_mb /></td>
+	<td width="120" style="text-align: right;">#LSNumberFormat(qReport.db_tbs_free_mb,"999,999.99")#</td>
+	<td width="120" style="text-align: right;">#LSNumberFormat(qReport.db_tbs_can_grow_mb,"999,999")#<cfset nSubCanGrowToSum = nSubCanGrowToSum + qReport.db_tbs_can_grow_mb /></td>
+	<td width="120" style="text-align: right;">#LSNumberFormat(qReport.db_tbs_max_free_mb,"999,999.99")#</td>
+	<td width="120" style="cursor:help; text-align: right;" class="otrtip" title="#LsNumberFormat(qReport.db_tbs_prc_used,"999.09")# %">#LsNumberFormat(round(qReport.db_tbs_prc_used),"999")# %</td>
+	<td width="120" style="cursor:help; text-align: right;" class="otrtip" title="#LsNumberFormat(qReport.db_tbs_real_prc_used,"999.09")# %">#LsNumberFormat(round(qReport.db_tbs_real_prc_used),"999")# %</td>
 </tr></cfoutput>
 <tr>
 	<td align="right">Sub Total (MB):</td>
@@ -446,33 +526,72 @@ function submitForm() {
 	<td colspan="2">&nbsp;</td>
 	<td align="right"><a href="##top" style="font-size: 7pt; cursor:hand;" onFocus="this.blur();">Top</a></td>
 </tr>
-<cfquery name="qNFSreport" datasource="#application.datasource#">
+<cfquery name="qNFSreport" datasource="#Application.datasource#">
 	select * 
 	from otr_nfs_space_rep
-	where db_name = '#qReport.db_name#'
+	where UPPER(db_name) = '#UCase(qReport.db_name)#'
 	and   trunc(rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
 	order by trunc(rep_date), db_name, mountpoint
+</cfquery>
+<cfif qNFSreport.RecordCount GT 0><tr>
+	<td colspan="7">&nbsp;</td>
+</tr></cfif>
+<cfoutput query="qNFSreport"><tr<cfif qNFSreport.CurrentRow mod 2> class="alternate"</cfif>>
+	<td style="text-align: left;">NFS Server: <strong>#qNFSreport.nfs_server#</strong></td>
+	<td align="left" colspan="2"<cfif qNFSReport.filesystem CONTAINS 'SnapManager'> class="otrtip" title="#qNFSreport.filesystem#" style="cursor:help; color: rgb(124,43,66);"<cfset bSMO = 1 /></cfif>>Mount: #qNFSreport.mountpoint#</td>
+	<td style="text-align: right;">#LSNumberFormat(qNFSreport.nfs_mb_total,"999,999")#<cfset nfsSubSum = nfsSubSum + qNFSreport.nfs_mb_total /></td>
+	<td style="text-align: right;">#LSNumberFormat(qNFSreport.nfs_mb_free,"999,999")#<cfset nfsSubFreeSum = nfsSubFreeSum + qNFSreport.nfs_mb_free /></td>
+	<td style="text-align: right;">#LsNumberFormat(round(qNFSreport.nfs_prc_used),"999")# %</td>
+</tr><cfset showNFSsum = 1 /></cfoutput>
+<cfif showNFSsum IS 1><tr>
+	<td colspan="3">&nbsp;</td>
+	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(nfsSubSum,"999,999")#</td>
+	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(nfsSubFreeSum,"999,999")#</td>
+	<td colspan="2">&nbsp;</td>
+</tr><cfset nfsTotSum = nfsTotSum + nfsSubSum /><cfset nfsTotFreeSum = nfsTotFreeSum + nfsSubFreeSum /></cfif>
+<cfquery name="qASMreport" datasource="#Application.datasource#">
+	select * 
+	from otr_asm_space_rep
+	where UPPER(db_name) = '#UCase(qReport.db_name)#'
+	and   trunc(rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
+	order by trunc(rep_date), db_name, dg_name
 </cfquery>
 <tr>
 	<td colspan="7">&nbsp;</td>
 </tr>
-<cfoutput query="qNFSreport"><tr>
-	<td align="left">NFS Server: <strong>#qNFSreport.nfs_server#</strong></td>
-	<td align="left" colspan="2"<cfif qNFSReport.filesystem CONTAINS 'SnapManager'> class="otrtip" title="#qNFSreport.filesystem#" style="cursor:help; color: rgb(124,43,66);"<cfset bSMO = 1 /></cfif>>Mount: #qNFSreport.mountpoint#</td>
-	<td align="right">#LSNumberFormat(qNFSreport.nfs_mb_total,"999,999")#<cfset nfsSubSum = nfsSubSum + qNFSreport.nfs_mb_total /></td>
-	<td align="right">#LSNumberFormat(qNFSreport.nfs_mb_free,"999,999")#<cfset nfsSubFreeSum = nfsSubFreeSum + qNFSreport.nfs_mb_free /></td>
-	<td align="right">#LsNumberFormat(round(qNFSreport.nfs_prc_used),"999")# %</td>
-</tr><cfset nfsTotSum = nfsTotSum + nfsSubSum /><cfset nfsTotFreeSum = nfsTotFreeSum + nfsSubFreeSum /><cfset showNFSsum = 1 /></cfoutput>
-<cfif showNFSsum IS 1><tr>
-	<td colspan="3">&nbsp;</td>
-	<td align="right"><strong><u>#LSNumberFormat(nfsSubSum,"999,999")#</u></strong></td>
-	<td align="right"><strong><u>#LSNumberFormat(nfsSubFreeSum,"999,999")#</u></strong></td>
-	<td colspan="2">&nbsp;</td>
+<cfif qASMreport.RecordCount GT 0><tr>
+	<td style="text-align: left; font-weight: bold;">Disk Group</td>
+	<td style="text-align: right; font-weight: bold;">Used (MB)</td>
+	<td style="text-align: right; font-weight: bold;">Free (MB)</td>
+	<td style="text-align: right; font-weight: bold;">Total (MB)</td>
+	<td>&nbsp;</td>
+	<td style="text-align: right; font-weight: bold;">% Used</td>
+	<td>&nbsp;</td>
 </tr></cfif>
+<cfoutput query="qASMreport"><tr<cfif qASMreport.CurrentRow mod 2> class="alternate"</cfif>>
+	<td align="left">#qASMreport.dg_name#</td>
+	<td style="text-align: right;">#LSNumberFormat(qASMreport.asm_mb_used, "999,999")#<cfset asmSubUsedSum = asmSubUsedSum + qASMreport.asm_mb_used /></td>
+	<td style="text-align: right;">#LSNumberFormat(qASMreport.asm_mb_free, "999,999")#<cfset asmSubFreeSum = asmSubFreeSum + qASMreport.asm_mb_free /></td>
+	<td style="text-align: right;">#LSNumberFormat(qASMreport.asm_mb_total, "999,999")#<cfset asmSubTotalSum = asmSubTotalSum + qASMreport.asm_mb_Total /></td>
+	<td>&nbsp;</td>
+	<td class="otrtip" title="#LsNumberFormat(qASMreport.asm_prc_used,"999.09")# %" style="cursor:help; text-align: right;">#LsNumberFormat(round(qASMreport.asm_prc_used),"999")# %</td>
+	<td>&nbsp;</td>
+</tr><cfset showASMsum = 1 /></cfoutput>
+<cfif showASMsum IS 1><tr>
+	<td style="text-align: right;">Sub Total (MB):</td>
+	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubUsedSum,"999,999")#</td>
+	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubFreeSum,"999,999")#</td>
+	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubTotalSum,"999,999")#</td>
+	<td colspan="3">&nbsp;</td>
+</tr><cfset asmTotUsedSum = (asmTotUsedSum + asmSubUsedSum) /><cfset asmTotFreeSum = asmTotFreeSum + asmSubFreeSum /><cfset asmTotTotalSum = asmTotTotalSum + asmSubTotalSum /></cfif>
 </table>
 <cfset showNFSsum = 0 />
 <cfset nfsSubSum = 0 />
 <cfset nfsSubFreeSum = 0 />
+<cfset showASMsum = 0 />
+<cfset asmSubUsedSum = 0 />
+<cfset asmSubFreeSum = 0 />
+<cfset asmSubTotalSum = 0 />
 <cfset nTotSum = nTotSum + nSubSum />
 <cfset nSubSum = 0 />
 <cfset nTotCanGrowToSum = nTotCanGrowToSum + nSubCanGrowToSum />
@@ -481,29 +600,36 @@ function submitForm() {
 </cfoutput>
 <table border="0" cellpadding="2" cellspacing="1">
 <tr>
-	<td width="200" align="right">Total DB Space Used (MB):</td>
-	<td width="120" align="right"><strong><u><cfoutput>#LSNumberFormat(nTotSum,"999,999")#</cfoutput></u></strong></td>
+	<td width="200" style="text-align: right;">Total DB Space Used (MB):</td>
+	<td width="120" style="text-align: right; font-weight: bold; text-decoration:underline;"><cfoutput>#LSNumberFormat(nTotSum,"999,999")#</cfoutput></td>
 	<td width="120">&nbsp;</td>
-	<td width="120" align="right"><strong><u><cfoutput>#LSNumberFormat(nTotCanGrowToSum,"999,999")#</cfoutput></u></strong></td>
+	<td width="120" style="text-align: right; font-weight: bold; text-decoration:underline;"><cfoutput>#LSNumberFormat(nTotCanGrowToSum,"999,999")#</cfoutput></td>
 	<td colspan="3">&nbsp;</td>
-</tr>
+</tr><cfif qNFSrep.RecordCount GT 0>
 <tr>
 	<td colspan="7">&nbsp;</td>
 </tr>
 <tr>
-	<td width="200" align="right">Total NFS Space Used (MB):</td>
-	<td width="120" align="right"><strong><u><!--- <cfoutput>#LSNumberFormat(nTotSum,"999,999")#</cfoutput>---></u></strong></td>
+	<td width="200" style="text-align: right;">Total NFS Space Used (MB):</td>
+	<td width="120" style="text-align: right; font-weight: bold; text-decoration:underline;"><!--- <cfoutput>#LSNumberFormat(nTotSum,"999,999")#</cfoutput>---></td>
 	<td width="120">&nbsp;</td>
-	<td width="120" align="right"><strong><u><cfoutput>#LSNumberFormat(nfsTotSum,"999,999")#</cfoutput></u></strong></td>
-	<td width="120" align="right"><strong><u><cfoutput>#LSNumberFormat(nfsTotFreeSum,"999,999")#</cfoutput></u></strong></td>
+	<td width="120" style="text-align: right; font-weight: bold; text-decoration:underline;"><cfoutput>#LSNumberFormat(nfsTotSum,"999,999")#</cfoutput></td>
+	<td width="120" style="text-align: right; font-weight: bold; text-decoration:underline;"><cfoutput>#LSNumberFormat(nfsTotFreeSum,"999,999")#</cfoutput></td>
 	<td colspan="2">&nbsp;</td>
-</tr>
+</tr></cfif><cfif qASMreport.RecordCount GT 0>
+<tr>
+	<td width="200" style="text-align: right;">Total ASM Space Used (MB):</td>
+	<td width="120" style="text-align: right; font-weight: bold; text-decoration:underline;"><cfoutput>#LSNumberFormat(asmTotUsedSum,"999,999")#</cfoutput></td>
+	<td width="120" style="text-align: right; font-weight: bold; text-decoration:underline;"><cfoutput>#LSNumberFormat(asmTotFreeSum,"999,999")#</cfoutput></td>
+	<td width="120" style="text-align: right; font-weight: bold; text-decoration:underline;"><cfoutput>#LSNumberFormat(asmTotTotalSum,"999,999")#</cfoutput></td>
+	<td colspan="2">&nbsp;</td>
+</tr></cfif>
 </table>
 	<table border="0" width="100%">
 	<tr>
 		<td align="right" style="color: red;">
-		<strong>% Used</strong> and <strong>% Real Used</strong> are rounded up. Just "Mouse Over" these 2 columns to see the real value with 2 decimal digits<br />
-		<strong>NOTE:</strong> NFS Space Usage is without snapshot space calculated!!!<cfif bSMO IS 1>&nbsp;<span style="color: rgb(124,43,66);">Mount: /u01/oradata</span> = SnapManager Clone.</cfif>
+		<strong>% Used</strong> and <strong>% Real Used</strong> are rounded up. Just "Mouse Over" these 2 columns to see the real value with 2 decimal digits<cfif qNFSrep.RecordCount GT 0><br />
+		<strong>NOTE:</strong> NFS Space Usage is without snapshot space calculated!!!<cfif bSMO IS 1>&nbsp;<span style="color: rgb(124,43,66);">Mount: /u01/oradata</span> = SnapManager Clone.</cfif></cfif>
 		</td>
 	</tr>
 	</table>

@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -41,6 +41,7 @@
 <cfset sPath = ExpandPath('/') />
 <cfset sTemplatePath = GetDirectoryfrompath(GetBasetemplatePath()) />
 <cfset bNoTablespace = 0 />
+<!---
 <!--- Does the file exist ? If not it's a new Setup --->
 <cfif cDirSep IS "/">
 	<cfset sFileCheck = #Application.ogc_external_table# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
@@ -51,6 +52,58 @@
 <cfif NOT FileExists(sFileCheck)>
 	<cfset bNoTablespace = 1 />
 </cfif>
+<!--- If External Table .DAT Exists --->
+<cfif bNoTablespace IS 0>
+	<cftry>
+		<cfquery name="qTBSxtTest" datasource="#Application.datasource#">
+			select db_name
+			  from otr_cust_appl_tbs_xt
+		</cfquery>
+		<cfcatch type="Database">
+		</cfcatch>
+	</cftry>
+</cfif>
+--->
+<!--- Does the External Table still Exist? --->
+<cfset bExtTable = 1 />
+<cftry>
+	<cfquery name="qTBSextTest" datasource="#Application.datasource#">
+		select db_name
+		  from otr_cust_appl_tbs_xt
+	</cfquery>
+	<cfcatch type="Database">
+		<cfset bExtTable = 0 />
+	</cfcatch>
+</cftry>
+<!--- Check if the new table exist and if not flag for upgrade.
+	  If exist but empty set menu 3 to load data. --->
+<cfset bUpgrade = 0 />
+<cftry>
+	<cfquery name="qTBStest" datasource="#Application.datasource#">
+		select db_name
+		  from otr_cust_appl_tbs
+	</cfquery>
+	<cfcatch type="Database">
+		<cfset bUpgrade = 1 />
+	</cfcatch>
+</cftry>
+<cfif bUpgrade IS 0>
+	<cftry>
+		<cfquery name="qASMtableTest" datasource="#Application.datasource#">
+			select db_name
+			  from ots_asm_space_rep
+		</cfquery>
+		<cfcatch type="Database">
+			<cfset bUpgrade = 1 />
+		</cfcatch>
+	</cftry>
+</cfif>
+<cfif bUpgrade IS 0>
+	<cfif qTBStest.RecordCount IS 0>
+		<cfset bNoTablespace = 1 />
+	</cfif>
+</cfif>
+
 <!--- atleast one DB-Instance and one Customer exists --->
 <cfif qRepClient.RecordCount IS NOT 0 AND qDBInstances.RecordCount IS NOT 0 AND bNoTablespace IS 0>
 	<cflocation url="/otr/index.cfm" addtoken="no" />
@@ -86,11 +139,28 @@
 		<cfelse>
 			<li>2. Create atleast 1 customer (Your self)</li>
 		</cfif>
+		<cfif bExtTable IS 1>
+			<cfif bUpgrade IS 1>
+				<li>3. You must run the OTR_TBS_UPGRADE.sql Script and then re-load this page.</li>
+			<cfelse>
+				<li>3. <a href="otr_setup_copy_tbs.cfm" onfocus="this.blur();">Upgrade the OTR_CUST_APPL_TBS Table.</a></li>
+			</cfif>
+		<cfelse>
+			<cfif bUpgrade IS 1>
+				<li>3. You must run the OTR_TBS_UPGRADE.sql Script and then re-load this page.</li>
+			<cfelse>
+				<cfif bNoTablespace IS 1>
+					<li>3. <a href="otr_setup_load_tbs.cfm" onfocus="this.blur();">Load the OTR_CUST_APPL_TBS Table.</a></li>
+				</cfif>
+			</cfif>
+		</cfif>
+		<!---
 		<cfif bNoTablespace IS 1>
 			<li>3. <a href="otr_setup_ext.cfm" onfocus="this.blur();">Create the external table source</a></li>
 		<cfelse>
 			<li>3. Create the external table source</li>
 		</cfif>
+		--->
 		</ul>
 				</td>
 			</tr>

@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,20 +16,25 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
 <cfquery name="qHostInstances" datasource="#Application.datasource#">
-	select distinct a.hostname db_host, a.db_name, a.rep_date, c.db_port, c.system_password
-	from otrrep.otr_nfs_space_rep a, otrrep.otr_space_rep_max_timestamp_v b, otrrep.otr_db c
-	where TRUNC(a.rep_date) = b.rep_date 
-	  and a.db_name = c.db_name
-	order by rep_date desc, hostname, db_name
+	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_password, c.db_rac, c.db_servicename 
+	  from otrrep.otr_nfs_space_rep a, otrrep.otr_space_rep_max_timestamp_v b, otrrep.otr_db c 
+	 where TRUNC(a.rep_date) = b.rep_date 
+	   and UPPER(a.db_name) = UPPER(c.db_name) 
+	union
+	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_password, c.db_rac, c.db_servicename 
+	  from otrrep.otr_asm_space_rep a, otrrep.otr_space_rep_max_timestamp_v b, otrrep.otr_db c 
+	 where TRUNC(a.rep_date) = b.rep_date 
+	   and UPPER(a.db_name) = UPPER(c.db_name) 
+	order by rep_date, db_host, db_name
 </cfquery>
 
 <cfquery name="getDate" datasource="#Application.datasource#">
@@ -39,7 +44,7 @@
 <cfset pdf_date = DateFormat(getDate.rep_date, 'yyyymmdd') />
 <!--- Define Date Format --->
 <cfset dummy = SetLocale("#Application.locale_string#") />
-<cfdocument format="pdf" filename="#application.host_instance_pdf_dir#dbhosts_instances_#pdf_date#.pdf" overwrite="yes" pagetype="A4">
+<cfdocument format="pdf" filename="#Application.host_instance_pdf_dir#dbhosts_instances_#pdf_date#.pdf" overwrite="yes" pagetype="A4">
 <style>
   table {
     -fs-table-paginate: paginate;
@@ -75,7 +80,11 @@
 		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qHostInstances.system_password)) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
-		<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHostInstances.db_host)#:#qHostInstances.db_port#:#UCase(qHostInstances.db_name)#" />
+		<cfif qHostInstances.db_rac IS 1>
+			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHostInstances.db_host)#:#qHostInstances.db_port#/#UCase(qHostInstances.db_servicename)#" />
+		<cfelse>
+			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHostInstances.db_host)#:#qHostInstances.db_port#:#UCase(qHostInstances.db_name)#" />
+		</cfif>
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 		<cfset s.databasename = "#UCase(qHostInstances.db_name)#" />
 		<cfset s.username     = "system" />
@@ -117,7 +126,9 @@
 		<td><cfoutput>#qHostInstances.db_name#</cfoutput></td>
 		<td><cfoutput>#sVersion#</cfoutput></td>
 	</tr>
-	<cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') /></cfloop>
+	<!--- <cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') /> --->
+	<cfset dRepDate = LSDateFormat(getDate.rep_date, 'medium') />
+	</cfloop>
 	</tbody>
 	<tr>
 		<td colspan="2" style="font-size: 8pt;font-weight: normal;font-style: oblique">Number of Instances: <cfoutput>#qHostInstances.RecordCount#, Stand: #dRepDate#</cfoutput></td>

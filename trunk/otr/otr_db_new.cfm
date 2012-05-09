@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2011 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -119,6 +119,14 @@ function showDiv() {
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Listener Port:&nbsp;</td>
 		<td width="300"><input type="text" name="db_port" id="db_port" value="" size="6"></td>
 	</tr>
+        <tr>
+                <td width="300" align="right" style="font-size: 9pt;font-weight: bold;">RAC Instance:&nbsp;</td>
+                <td width="300"><input type="checkbox" name="db_rac" id="db_rac" value="1"></td>
+        </tr>
+        <tr>
+                <td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Service Name:&nbsp;</td>
+                <td width="300"><input type="text" name="db_servicename" id="db_servicename" value="" size="33"></td>
+        </tr>
 	<tr>
 		<td colspan="2">&nbsp;</td>
 	</tr>
