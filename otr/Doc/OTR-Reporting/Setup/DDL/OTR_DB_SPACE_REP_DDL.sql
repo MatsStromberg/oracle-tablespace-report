@@ -28,7 +28,11 @@ CREATE TABLE OTR_DB
  ,DB_DESC VARCHAR2(100) NOT NULL 
  ,SYSTEM_PASSWORD VARCHAR2(200)
  ,DB_HOST VARCHAR2(100)
- ,DB_PORT NUMBER(6) DEFAULT 1521 )
+ ,DB_PORT NUMBER(6) DEFAULT 1521
+ ,DB_ASM  NUMBER(3) DEFAULT 0
+ ,DB_RAC  NUMBER(3) DEFAULT 0
+ ,DB_SERVICENAME VARCHAR2(100)
+ ,DB_BLACKOUT    NUMBER(3) DEFAULT 0 )
  TABLESPACE OTR_REP_DATA
 /
 
@@ -43,6 +47,14 @@ COMMENT ON COLUMN OTRREP.OTR_DB.SYSTEM_PASSWORD IS 'Password for user SYSTEM'
 COMMENT ON COLUMN OTRREP.OTR_DB.DB_HOST IS 'Host server for this Instance'
 /
 COMMENT ON COLUMN OTRREP.OTR_DB.DB_PORT IS 'Listener Port for this Instance'
+/
+COMMENT ON COLUMN OTRREP.OTR_DB.DB_ASM IS 'Storage using ASM = 1, NO ASM = 0'
+/
+COMMENT ON COLUMN OTRREP.OTR_DB.DB_RAC IS 'RAC = 1, NO RAC = 0'
+/
+COMMENT ON COLUMN OTRREP.OTR_DB.DB_SERVICENAME IS 'Service Name is required for RAC!'
+/
+COMMENT ON COLUMN OTRREP.OTR_DB.DB_RAC IS 'BLACKOUT = 1, ONLINE = 0'
 /
 
 
@@ -132,6 +144,20 @@ CREATE TABLE OTR_NFS_SPACE_REP
  TABLESPACE OTR_REP_DATA
 /
 
+PROMPT Creating Table 'OTR_ASM_SPACE_REP'
+CREATE TABLE OTR_ASM_SPACE_REP
+ (DB_NAME              VARCHAR2(20)  NOT NULL
+ ,HOSTNAME             VARCHAR2(50)  NOT NULL
+ ,REP_DATE             DATE          NOT NULL -- SYSDATE without time, TRUNC
+ ,DG_NAME              VARCHAR2(30)  NOT NULL -- ASM Disk Group Name
+ ,ASM_MB_TOTAL         NUMBER(20,6)  NOT NULL -- ASM Volume Size (in MB)
+ ,ASM_MB_USED          NUMBER(20,6)  NOT NULL -- ASM Used Volume Space (in MB)
+ ,ASM_MB_FREE          NUMBER(20,6)  NOT NULL -- ASM Avalable Volume Space (in MB)
+ ,ASM_PRC_USED         NUMBER(20,6)  NOT NULL -- ASM Available Space (in Procent) computed
+ )
+ TABLESPACE OTR_REP_DATA
+/
+
 
 PROMPT Creating constraints
 PROMPT Creating PK constraints
@@ -165,6 +191,12 @@ ALTER TABLE OTR_NFS_SPACE_REP
       USING INDEX TABLESPACE OTR_REP_INDX)
 /
 
+PROMPT Adding constraint to table 'OTR_ASM_SPACE_REP'
+ALTER TABLE OTR_ASM_SPACE_REP
+ ADD (CONSTRAINT OTR_ASM_SPACE_REP_PK PRIMARY KEY (DB_NAME, DG_NAME, REP_DATE)
+      USING INDEX TABLESPACE OTR_REP_INDX)
+/
+
 
 PROMPT Creating CHECK constraints
 PROMPT Creating Check Constraint on 'OTR_DB'
@@ -176,22 +208,22 @@ PROMPT CREATING VIEWS
 REM View definition for constructing the relation CUSTOMER, DB and APPLICATION
 create or replace view OTRREP.OTR_CUST_APPL_DB_V as 
 select distinct a.CUST_ID,a.CUST_APPL_ID,a.DB_NAME,b.DB_ENV
- from OTRREP.OTR_CUST_APPL_TBS_XT a
+ from OTRREP.OTR_CUST_APPL_TBS a
      ,OTR_DB b
      ,OTR_CUST c
-where b.db_name = a.db_name
-  and c.cust_id = a.cust_id
+where UPPER(b.db_name) = UPPER(a.db_name)
+  and UPPER(c.cust_id) = UPPER(a.cust_id)
 order by a.CUST_ID,a.CUST_APPL_ID,a.DB_NAME
 /
 
 REM View definition for constructing the relation CUSTOMER, DB, APPLICATION and TBS
 create or replace view OTRREP.OTR_CUST_APPL_DB_TBS_V as 
 select a.CUST_ID,a.CUST_APPL_ID,a.DB_NAME,a.DB_TBS_NAME,b.DB_ENV
- from OTRREP.OTR_CUST_APPL_TBS_XT a
+ from OTRREP.OTR_CUST_APPL_TBS a
      ,OTR_DB b
      ,OTR_CUST c
-where b.db_name = a.db_name
-  and c.cust_id = a.cust_id
+where UPPER(b.db_name) = UPPER(a.db_name)
+  and UPPER(c.cust_id) = UPPER(a.cust_id)
 order by a.CUST_ID,a.CUST_APPL_ID,a.DB_NAME,a.DB_TBS_NAME
 /
 
@@ -217,7 +249,7 @@ AS
             b.db_tbs_can_grow_mb, b.db_tbs_max_free_mb, b.db_tbs_prc_used,
             b.db_tbs_real_prc_used
        FROM otr_cust_appl_db_tbs_v a, otr_db_space_rep b
-      WHERE b.db_name = a.db_name AND b.db_tbs_name = a.db_tbs_name
+      WHERE UPPER(b.db_name) = UPPER(a.db_name) AND b.db_tbs_name = a.db_tbs_name
    ORDER BY a.cust_appl_id, a.db_env, a.db_name, a.db_tbs_name
 /
 
