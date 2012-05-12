@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -86,6 +86,11 @@ function submit_check() {
 				document.getElementById("file_type").value = 'xls';
 				return true;
 			}
+			else if (document.getElementById("file_name").value.substring(document.getElementById("file_name").value.length-4) == 'xlsx') {
+				document.getElementById("file_type").value = 'xlsx';
+				return true;
+			}
+
 			else if (document.getElementById("file_name").value.substring(document.getElementById("file_name").value.length-3) == 'csv') {
 					 document.getElementById("file_type").value = 'csv';
 					return true;

@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -167,7 +167,7 @@ $(document).ready(function() {
 			<td align="right">Include:</td>
 			<td>
 				<input type="checkbox" name="development" value="1" checked> Development DB's&nbsp;&nbsp;
-				<input type="checkbox" name="internal" value="1" checked> Internal DB's (<span class="otrtip" title="Grid Control/Cloud Control 12c" style="cursor: help; border-bottom: 1px dotted;">Enterprise Manager</span>, <span class="otrtip" title="Oracle Recovery Manager" style="cursor: help; border-bottom: 1px dotted;">RMAN</span> & <span class="otrtip" title="SnapManager for Oracle" style="cursor: help; border-bottom: 1px dotted;">SMO</span> etc.)
+				<input type="checkbox" name="internal" value="1" checked> Internal DB's (<span class="otrtip" title="Grid Control 10g/Cloud Control 12c" style="cursor: help; border-bottom: 1px dotted;">Enterprise Manager</span>, <span class="otrtip" title="Oracle Recovery Manager" style="cursor: help; border-bottom: 1px dotted;">RMAN</span> & <span class="otrtip" title="SnapManager for Oracle" style="cursor: help; border-bottom: 1px dotted;">SMO</span> etc.)
 			</td>
 		</tr>
 		<tr>

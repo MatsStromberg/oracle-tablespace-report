@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -32,12 +32,22 @@ set db_name = <cfqueryparam value="#FORM.db_name#" cfsqltype="cf_sql_varchar" />
 	system_password = <cfqueryparam value="#Application.pw_hash.encryptOraPW(Trim(FORM.system_password))#" cfsqltype="cf_sql_varchar" />,
 	db_host = <cfqueryparam value="#FORM.db_host#" cfsqltype="cf_sql_varchar" />,
 	db_port = <cfqueryparam value="#FORM.db_port#" cfsqltype="cf_sql_integer" />,
+	<cfif IsDefined("FORM.db_asm")>
+		db_asm = 1,
+	<cfelse>
+		db_asm = 0,
+	</cfif>
 	<cfif IsDefined("FORM.db_rac")>
-		db_rac = <cfqueryparam value="#FORM.db_rac#" cfsqltype="cf_sql_integer" />,
+		db_rac = 1,
 	<cfelse>
 		db_rac = 0,
 	</cfif>
-	db_servicename = <cfqueryparam value="#FORM.db_servicename#" cfsqltype="cf_sql_varchar" />
+	db_servicename = <cfqueryparam value="#FORM.db_servicename#" cfsqltype="cf_sql_varchar" />,
+	<cfif IsDefined("FORM.db_blackout")>
+		db_blackout = 1
+	<cfelse>
+		db_blackout = 0
+	</cfif>
 where db_name = <cfqueryparam value="#FORM.old_db_name#" cfsqltype="cf_sql_varchar" />
 </cfquery>
 

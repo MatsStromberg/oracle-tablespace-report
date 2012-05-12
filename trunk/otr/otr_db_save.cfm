@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -27,33 +27,53 @@
 <cfquery name="qInsert" datasource="#application.datasource#">
 <cfif IsDefined("FORM.system_password") AND Trim(FORM.system_password GT "")>
 	insert into otr_db
-			(db_name, db_env, db_desc, system_password, db_host, db_port, db_rac, db_servicename) 
+			(db_name, db_env, db_desc, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout) 
 	 VALUES (<cfqueryparam value="#FORM.db_name#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_env#"  cfsqltype="cf_sql_varchar" />,
 	 		 <cfqueryparam value="#FORM.db_desc#" cfsqltype="cf_sql_varchar" />,
 	 		 <cfqueryparam value="#Application.pw_hash.encryptOraPW(Trim(FORM.system_password))#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_host#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_port#" cfsqltype="cf_sql_integer" />,
+			 <cfif IsDefined("FORM.db_asm")>
+				 <cfqueryparam value="1" cfsqltype="cf_sql_integer" />,
+			 <cfelse>
+				 <cfqueryparam value="0" cfsqltype="cf_sql_integer" />,
+			 </cfif>
 			 <cfif IsDefined("FORM.db_rac")>
 				 <cfqueryparam value="1" cfsqltype="cf_sql_integer" />,
 			 <cfelse>
-                                 <cfqueryparam value="0" cfsqltype="cf_sql_integer" />,
+				 <cfqueryparam value="0" cfsqltype="cf_sql_integer" />,
 			 </cfif>
-			 <cfqueryparam value="#FORM.db_servicename#" cfsqltype="cf_sql_varchar" />)
+			 <cfqueryparam value="#FORM.db_servicename#" cfsqltype="cf_sql_varchar" />,
+			 <cfif IsDefined("FORM.db_blackout")>
+				 <cfqueryparam value="1" cfsqltype="cf_sql_integer" />
+			 <cfelse>
+				 <cfqueryparam value="0" cfsqltype="cf_sql_integer" />
+			 </cfif> )
 <cfelse>
 	insert into otr_db
-			(db_name, db_env, db_desc, db_host, db_port, db_rac, db_servicename) 
+			(db_name, db_env, db_desc, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout) 
 	 VALUES (<cfqueryparam value="#FORM.db_name#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_env#"  cfsqltype="cf_sql_varchar" />,
 	 		 <cfqueryparam value="#FORM.db_desc#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_host#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_port#" cfsqltype="cf_sql_integer" />,
-			 <cfif IsDefined("FORM.db_rac")>
-	                         <cfqueryparam value="1" cfsqltype="cf_sql_integer" />,
+			 <cfif IsDefined("FORM.db_asm")>
+				 <cfqueryparam value="1" cfsqltype="cf_sql_integer" />,
 			 <cfelse>
-                                 <cfqueryparam value="0" cfsqltype="cf_sql_integer" />,
+				 <cfqueryparam value="0" cfsqltype="cf_sql_integer" />,
 			 </cfif>
-                         <cfqueryparam value="#FORM.db_servicename#" cfsqltype="cf_sql_varchar" />)
+			 <cfif IsDefined("FORM.db_rac")>
+				 <cfqueryparam value="1" cfsqltype="cf_sql_integer" />,
+			 <cfelse>
+				 <cfqueryparam value="0" cfsqltype="cf_sql_integer" />,
+			 </cfif>
+			 <cfqueryparam value="#FORM.db_servicename#" cfsqltype="cf_sql_varchar" />,
+			 <cfif IsDefined("FORM.db_blackout")>
+				 <cfqueryparam value="1" cfsqltype="cf_sql_integer" />
+			 <cfelse>
+				 <cfqueryparam value="0" cfsqltype="cf_sql_integer" />
+			 </cfif> )
 </cfif>
 </cfquery>
 <!---

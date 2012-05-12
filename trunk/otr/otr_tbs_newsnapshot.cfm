@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -42,7 +42,7 @@ top.location.replace("#caller_url#");
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
-	<title><cfoutput>#application.company#</cfoutput>Creating Tablespace Snapshot</title>
+	<title><cfoutput>#Application.company#</cfoutput> - Creating Tablespace Snapshot</title>
 <cfinclude template="_otr_css.cfm">
 </head>
 <body>

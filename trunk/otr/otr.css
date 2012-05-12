@@ -44,13 +44,11 @@ tr.alternate {
   background-color: white;
   background-image: url(images/halge_ligger.jpg);
   background-repeat: no-repeat;
-  /*height:100%;
-  width:100%;*/
   width: 450px;
   height: 260px;
   margin:10px auto;
-  left:400px; 
-  top:150px;
+  /* left:400px; */ 
+  /* top:150px; */
   z-index:30;
 }
 #countDown {

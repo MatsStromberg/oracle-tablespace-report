@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -243,7 +243,7 @@ function confirmation(txt, url) {
 <!--- <cfoutput>#sTemplatePath#</cfoutput><br /> --->
 <h2><cfoutput>#Application.company#</cfoutput> - Oracle Customer/App/Tablespace</h2>
 <div align="center">
-<a href="otr_tbs_csv.cfm" class="otrtip" title="<div align='center'>Save info as a CSV File.</div>" target="csv"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result as CSV</a> - <a href="excel/otr_cust_tbs.xls" class="otrtip" title="<div align='center'>Save info as an Excel File.</div>" target="_new"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result to Excel</a> - <a href="otr_tbs_upload.cfm" class="otrtip" title="<div align='center'>Upload Tablespace Info from<br />an Excel or a CSV File.</div>"><img src="images/file.gif" alt="" width="18" height="18" border="0">&nbsp;Upload a new CSV or XLS</a><br>
+<a href="otr_tbs_csv.cfm" class="otrtip" title="<div align='center'>Save info as a CSV File.</div>" target="csv"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result as CSV</a> - <a href="excel/otr_cust_tbs.xls" class="otrtip" title="<div align='center'>Save info as an Excel File.</div>" target="_new"><img src="images/xls.png" alt="" width="16" height="16" border="0">&nbsp;Export Result to Excel</a> - <a href="otr_tbs_upload.cfm" class="otrtip" title="<div align='center'>Upload Tablespace Info from<br />an Excel or a CSV File.</div>"><img src="images/file.gif" alt="" width="18" height="18" border="0">&nbsp;Upload a new CSV or XLS(X)</a><br>
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">
@@ -279,7 +279,7 @@ function confirmation(txt, url) {
 	</td>
 </tr>
 </table>
-<iframe id="csv" height="0" width="0" name="csv"></iframe>
+<iframe id="csv" height="1" width="1" name="csv" style="visibility:hidden;"></iframe>
 </div>
 </body>
 </html></cfprocessingdirective>

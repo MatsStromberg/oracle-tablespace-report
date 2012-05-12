@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -28,27 +28,33 @@
 <cfset dToday = DateFormat(Now(),'dd.mm.yyyy')>
 <!--- <cfoutput>#dToday#<br />#CGI.HTTP_REFERER#</cfoutput> --->
 <cfquery name="qDelete" datasource="#Application.datasource#">
-	delete from otr_db_space_rep a
+	delete from otr_db_space_rep a, otr_db b
 	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	  and   a.db_name = b.db_name
+	  and   b.db_blackout = 0
 </cfquery>
 <cfquery name="qDelete2" datasource="#Application.datasource#">
-	delete from otr_nfs_space_rep a
+	delete from otr_nfs_space_rep a, otr_db b
 	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	  and   a.db_name = b.db_name
+	  and   b.db_blackout = 0
 </cfquery>
 <cfquery name="qDelete3" datasource="#Application.datasource#">
-	delete from otr_asm_space_rep a
+	delete from otr_asm_space_rep a, otr_db b
 	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	  and   a.db_name = b.db_name
+	  and   b.db_blackout = 0
 </cfquery>
 <!--- SnapShot Routine --->
 <cfset dRepDate = CreateODBCDateTime(CreateDateTime(Year(Now()),Month(Now()),Day(Now()),Hour(Now()),Minute(Now()),0)) />
 <!--- DB Instances with Password --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select db_name, system_password, db_host, db_port, db_rac, db_servicename
+	select db_name, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout
 	from otr_db
 	order by db_name
 </cfquery>
 <cfoutput query="qInstances">
-	<cfif Trim(qInstances.system_password) IS NOT "">
+	<cfif Trim(qInstances.system_password) IS NOT "" AND qInstances.db_blackout IS 0>
 	<cftry>
 		<cfif Trim(qInstances.db_port) IS "">
 			<!--- Get Listener Port from EM --->
@@ -103,6 +109,12 @@
 		</cfif>
 
 		<!--- Check if the Instance is using ASM --->
+		<cfif qInstances.db_asm IS 1>
+			<cfset bASM = 1 />
+		<cfelse>
+			<cfset bASM = 0 />
+		</cfif>
+		<!---
 		<cfquery name="qASM" datasource="#UCase(qInstances.db_name)#temp">
 			select distinct SUBSTR(file_name,1,1) asm
 			  from dba_data_files
@@ -113,6 +125,7 @@
 		<cfelse>
 			<cfset bASM = 0 />
 		</cfif>
+		--->
 
 		<!--- Lookup the Tablespaces to be monitored --->
 		<cfquery name="qTBS" datasource="OTR_OTRREP">
@@ -261,6 +274,7 @@
 
 		<cfcatch type="Database">
 			<cfset iDBErr = 1>
+			<!--- <cfdump var="#cfcatch#"> --->
 		</cfcatch>
 	</cftry>
 
