@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -28,23 +28,29 @@
 <cfset cDirSep = FileSeparator() />
 <cfset bExcel = 0>
 <cfset sPath = GetDirectoryfrompath(GetBasetemplatePath()) />
-<cfif cDirSep IS "/">
+<!--- <cfif cDirSep IS "/"> --->
 	<cfif Trim(FORM.file_type) IS "xls">
 		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.xls' />
 		<cfset bExcel = 1>
+	<cfelseif Trim(FORM.file_type) IS "xlsx">
+		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.xlsx' />
+		<cfset bExcel = 1>
 	<cfelse>
-		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.csv' /><br>
+		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.csv' />
 		<cfset bExcel = 0>
 	</cfif>
-<cfelse>
+<!--- <cfelse>
 	<cfif Trim(FORM.file_type) IS "xls">
 		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.xls' />
 		<cfset bExcel = 1>
+	<cfelseif Trim(FORM.file_type) IS "xlsx">
+		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.xlsx' />
+		<cfset bExcel = 1>
 	<cfelse>
-		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.csv' /><br>
+		<cfset sFile = '#sPath##cDirSep#OTR_CUST_APPL_TBS.csv' />
 		<cfset bExcel = 0>
 	</cfif>
-</cfif>
+</cfif> --->
 <cfsetting enablecfoutputonly="true" />
 <!--- 
 <cfoutput>

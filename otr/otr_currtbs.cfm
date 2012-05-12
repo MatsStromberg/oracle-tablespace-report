@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -27,7 +27,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select db.db_name, db.system_password, db.db_host, db.db_port, db_rac, db_servicename
+	select db.db_name, db.system_password, db.db_host, db.db_port, db_rac, db_servicename, db_blackout
 	  from otr_db db
 	 order by db_name
 </cfquery>
@@ -59,6 +59,9 @@ function confirmation(txt, url) {
 	<cfoutput query="qInstances">
 	<cfset iDBErr = 0>
 	<cftry>
+		<cfif qInstances.db_blackout IS 1>
+			<cfset iDBErr = 4 />
+		<cfelse>
 		<cfif Trim(qInstances.db_port) IS "">
 			<!--- Get Listener Port from EM --->
 			<cfquery name="qPort" datasource="OTR_SYSMAN">
@@ -206,6 +209,7 @@ function confirmation(txt, url) {
 				AND ROUND(((a.maxbytes - NVL (a.maxbytes - u.BYTES, a.maxbytes)) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
 		   ORDER BY 7 DESC
 		</cfquery>
+		</cfif>
 		<cfcatch type="Database">
 			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 				<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
@@ -220,10 +224,11 @@ function confirmation(txt, url) {
 			<cfset iDBErr IS 1 />
 		</cfcatch>
 	</cftry>
-	<cfif iRecordCount IS NOT 0 OR iDBErr IS 1>
+	<cfif iRecordCount IS NOT 0 OR iDBErr IS 1 OR iDBErr IS 4>
 	<tr<cfif qInstances.CurrentRow mod 2> class="alternate"</cfif>>
 		<td>#qInstances.db_name#</td>
-		<td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS<cfelse>&nbsp;</cfif></td>
+		<!--- ><td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS<cfelse>&nbsp;</cfif></td> --->
+		<td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"<cfelseif iDBErr IS 4> title="Instance is in#chr(13)#Blackout status"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1 OR iDBErr IS 4>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iDBErr IS 4>Blackout<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS</a><cfelse>&nbsp;</cfif></td>
 	</tr></cfif>
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />

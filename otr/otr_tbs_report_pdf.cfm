@@ -17,9 +17,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -194,7 +194,7 @@
 	<td width="220" style="font-size: 7pt; text-align: left; font-weight: bold;">Disk Group</td>
 	<td style="font-size: 7pt; text-align: right; font-weight: bold;">Used (MB)</td>
 	<td style="font-size: 7pt; text-align: right; font-weight: bold;">Free (MB)</td>
-	<td style="font-size: 7pt; text-align: right; font-weight: bold;">Totral (MB)</td>
+	<td style="font-size: 7pt; text-align: right; font-weight: bold;">Total (MB)</td>
 	<td>&nbsp;</td>
 	<td style="font-size: 7pt; text-align: right; font-weight: bold;">% Used</td>
 	<td>&nbsp;</td>
@@ -260,7 +260,7 @@
 </table>
 	<table border="0" width="100%">
 	<tr>
-		<td align="right" style="color: red;">
+		<td align="right" style="color: red; font-size: 6pt;">
 		<strong>% Used</strong> and <strong>% Real Used</strong> are rounded up.<cfif qNFSreport.RecordCount GT 0><br />
 		<strong>NOTE:</strong> NFS Space Usage is without snapshot space calculated!!!<cfif bSMO IS 1>&nbsp;<span style="color: rgb(124,43,66);">Mount: /u01/oradata</span> = SnapManager Clone.</cfif></cfif>
 		</td>

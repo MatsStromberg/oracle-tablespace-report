@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -26,8 +26,8 @@
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
-<cfquery name="qEdit" datasource="#application.datasource#" maxrows="1">
-	select db_name, db_env, db_desc, system_password, db_host, db_port, db_rac, db_servicename
+<cfquery name="qEdit" datasource="#Application.datasource#" maxrows="1">
+	select db_name, db_env, db_desc, system_password, db_host, db_port, db_asm, db_rac, db_servicename
 	from otr_db 
 	where NVL(system_password,'$NONE$') = '$NONE$'
 	order by db_name
@@ -41,13 +41,13 @@
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
-	<title><cfoutput>#application.company#</cfoutput> - Edit Oracle Instance</title>
+	<title><cfoutput>#Application.company#</cfoutput> - Edit Oracle Instance</title>
 <cfinclude template="_otr_css.cfm">
 </head>
 <body>
 <cfinclude template="_otr_menu_setup.cfm">
 <div align="center">
-<h2><cfoutput>#application.company#</cfoutput> - Edit Oracle Instance</h2>
+<h2><cfoutput>#Application.company#</cfoutput> - Edit Oracle Instance</h2>
 <div align="center">
 <table border="0" cellpadding="5">
 <tr>
@@ -88,6 +88,10 @@
 	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Listener Port:&nbsp;</td>
 		<td width="300"><input type="text" name="db_port" id="db_port" value="#Trim(qEdit.db_port)#" size="6"></td>
+	</tr>
+	<tr>
+		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">ASM Storage:&nbsp;</td>
+		<td width="300"><input type="checkbox" name="db_asm" id="db_asm" value="1"<cfif qEdit.db_asm IS 1> checked</cfif>></td>
 	</tr>
 	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">RAC Instance:&nbsp;</td>

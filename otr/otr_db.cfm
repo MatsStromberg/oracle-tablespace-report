@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -26,8 +26,8 @@
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
-<cfquery name="qInstances" datasource="#application.datasource#">
-	select db_name, db_env, db_desc, system_password, db_host, db_port, db_rac
+<cfquery name="qInstances" datasource="#Application.datasource#">
+	select db_name, db_env, db_desc, system_password, db_host, db_port, db_rac, db_blackout
 	from otr_db 
 	order by db_name
 </cfquery>
@@ -35,7 +35,7 @@
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
-	<title><cfoutput>#application.company#</cfoutput> - Oracle Instances</title>
+	<title><cfoutput>#Application.company#</cfoutput> - Oracle Instances</title>
 <link rel="stylesheet" href="JScripts/jQuery/jquery.tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
@@ -119,9 +119,9 @@ function confirmation(txt, url) {
                 <td width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
 		<td width="120" style="font-size: 8pt;font-weight: bold;">SYSTEM Password</td>
 		<td width="30" style="font-size: 8pt; font-weight: bold;">&nbsp;</td>
-		<td align="center" width="50" style="font-size: 8pt;font-weight: bold;">Edit</td>
-		<td align="center" width="50" style="font-size: 8pt;font-weight: bold;">Delete</td>
-		<td align="center" width="50" style="font-size: 8pt;font-weight: bold;">New</td>
+		<td align="center" width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
+		<td align="center" width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
+		<td align="center" width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
 	</tr>
 	</thead>
 	<tbody>
@@ -144,12 +144,12 @@ function confirmation(txt, url) {
 		<td style="font-size: 8pt;" class="otrtip" title="<cfif qInstances.db_env IS "SEE">Shared Enterprise Edition<cfelseif qInstances.db_env IS "DEE">Dedicated Enterprise Edition<cfelseif qInstances.db_env IS "DEV">Development Enterprise Edition<cfelseif qInstances.db_env IS "INT">Internal Enterprise Edition<cfelse>Shared Enterprise Edition</cfif>" style="cursor: help; text-align: center;">#qInstances.db_env#</td>
 		<td style="font-size: 8pt;">#qInstances.db_host#</td>
 		<td style="font-size: 8pt;">#qInstances.db_port#</td>
-		<td style="font-size: 8pt;"><img src="images/<cfif qInstances.db_rac IS 1>dbcluster.png" alt="Cluster-Database" title="Cluster-Database"<cfelse>database.png" alt="Database" title="Database"</cfif> width="16" height="16"></td>
+		<td style="font-size: 8pt;"><img src="images/<cfif qInstances.db_rac IS 1>dbcluster.png" alt="Cluster-Database" title="Cluster-Database"<cfelse>database.png" alt="Database" title="Database"</cfif> class="otrtip" width="16" height="16"></td>
 		<td style="font-size: 8pt;"><cfif Trim(qInstances.system_password) NEQ "">**********</cfif></td>
-		<td><cfif Trim(qInstances.system_password) NEQ ""><iframe src="otr_system_test.cfm?SID=#qInstances.db_name#" name="pwtest" id="pwtest" width="30" height="20" marginwidth="0" marginheight="0" scrolling="no" frameborder="0"></iframe><cfelse>&nbsp;</cfif></td>
-		<td align="center"><a href="otr_db_edit.cfm?db_name=#qInstances.db_name#"><img src="images/btn_edit.gif" alt="Edit" title="Edit" width="24" height="20" border="0"></a></td>
-		<td align="center"><a onClick="confirmation('Do you really want to delete #qInstances.db_name#?\nAll Statistics will also be deleted!!!','otr_db_delete.cfm?db_name=#qInstances.db_name#');"><img src="images/btn_delete.gif" alt="Delete" title="Delete" width="24" height="20" border="0" style="cursor: hand;"></a></td>
-		<td align="center"><a href="otr_db_new.cfm"><img src="images/btn_new.gif" alt="New" title="New" width="18" height="18" border="0"></a></td>
+		<cfif qInstances.db_blackout IS 1><td class="otrtip" title="<div align='center'>Instance in<br />Blackout mode</div>" align="center">B</td><cfelse><td class="otrtip" title="<div align='center'>Check the SYSTEM<br />Password</div>"><cfif Trim(qInstances.system_password) NEQ ""><iframe src="otr_system_test.cfm?SID=#qInstances.db_name#" name="pwtest" id="pwtest" width="30" height="20" marginwidth="0" marginheight="0" scrolling="no" frameborder="0"></iframe><cfelse>&nbsp;</cfif></td></cfif>
+		<td align="center"><a href="otr_db_edit.cfm?db_name=#qInstances.db_name#"><img src="images/btn_edit.gif" class="otrtip" alt="Edit" title="Edit Instance" width="24" height="20" border="0"></a></td>
+		<td align="center"><a onClick="confirmation('Do you really want to delete #qInstances.db_name#?\nAll Statistics will also be deleted!!!','otr_db_delete.cfm?db_name=#qInstances.db_name#');"><img src="images/btn_delete.gif" class="otrtip" alt="Delete" title="<div align='center'>Delete this<br />Instance</div>" width="24" height="20" border="0" style="cursor: hand;"></a></td>
+		<td align="center"><a href="otr_db_new.cfm"><img src="images/btn_new.gif" class="otrtip" alt="New" title="<div align='center'>Create a New<br />Instance</div>" width="18" height="18" border="0"></a></td>
 	</tr></cfoutput>
 	</tbody>
 	<tfoot>

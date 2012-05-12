@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -68,7 +68,31 @@ function hideHalgeDiv() {
 } 
 
 function showHalgeDiv() { 
+	var w = 0;
+	var h = 0;
+	//IE
+	if(!window.innerWidth) {
+		//strict mode
+		if(!(document.documentElement.clientWidth == 0)) {
+			w = document.documentElement.clientWidth;
+			h = document.documentElement.clientHeight;
+		}
+		//quirks mode
+		else {
+			w = document.body.clientWidth;
+			h = document.body.clientHeight;
+		}
+	}
+	//w3c
+	else {
+		w = window.innerWidth;
+		h = window.innerHeight;
+	}
+	w = (w/2) - 225;
+	h = (h/2) - 130;
 	if (document.getElementById) { // DOM3 = IE5, NS6 
+		document.getElementById("halgeDiv").style.left = w; 
+		document.getElementById("halgeDiv").style.top = h; 
 		document.getElementById("halgeDiv").style.visibility = 'visible'; 
 		document.getElementById("halgeDiv").style.display = 'block'; 
 	} 
