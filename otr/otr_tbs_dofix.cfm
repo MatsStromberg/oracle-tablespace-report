@@ -1,29 +1,3 @@
-<!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
-    
-    Contributing Developers:
-    Mats Strömberg - ms@network23.net
-
-    This file is part of the Oracle Tablespace Report.
-
-    The Oracle Tablespace Report is free software: you can redistribute 
-    it and/or modify it under the terms of the GNU General Public License 
-    as published by the Free Software Foundation, either version 3 of the 
-    License, or (at your option) any later version.
-
-    The Oracle Tablespace Report is distributed in the hope that it will 
-    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
-    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-    General Public License for more details.
-	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
-    
-    You should have received a copy of the GNU General Public License 
-    along with the Oracle Tablespace Report.  If not, see 
-    <http://www.gnu.org/licenses/>.
---->
 <cfif IsDefined("URL.action")>
 	<cfswitch expression="#URL.action#">
 		<cfcase value="increase">
@@ -46,54 +20,54 @@
 <cfif IsDefined("URL.BIGFILE") AND Trim(URL.BIGFILE) GT ""><cfset oraBIGFILE = Trim(URL.BIGFILE) /><cfelse>No info about BIGFILE passed<cfabort></cfif>
 
 <!--- Get the System Password --->
-<cfquery name="qGetDB" datasource="#application.datasource#">
-	select db_name, system_password, db_host, db_port, db_rac, db_servicename
+<cfquery name="qInstances" datasource="#Application.datasource#">
+	select db_name, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
 	from otr_db 
 	where UPPER(db_name) = '#Trim(UCase(oraSID))#'
 	order by db_name
 </cfquery>
 
 <!--- If no password set, Abort --->
-<cfif Trim(qGetDB.system_password) IS "">
+<cfif Trim(qInstances.system_password) IS "">
 	No System PASSWORD defined<cfabort>
 <cfelse>
-	<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qGetDB.system_password)) />
+	<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
 </cfif>
 
-<cfif Trim(qGetDB.db_port) IS "">
-	<!--- Get Listener Port --->
+<!--- Get Listener Port --->
+<cfif Trim(qInstances.db_port) IS "">
 	<cfquery name="qPort" datasource="OTR_SYSMAN">
 		select distinct b.property_value
 		  from mgmt_target_properties a, mgmt_target_properties b
 		 where a.target_guid = b.target_guid
-		   and   UPPER(a.property_value) = '#Trim(UCase(oraSID))#'
-		   and   b.property_name = 'Port';
+		   and UPPER(a.property_value) = '#Trim(UCase(oraSID))#'
+		   and b.property_name = 'Port';
 	</cfquery>
 	<cfset iPort = qPort.property_value />
 <cfelse>
-	<cfset iPort = qGetDB.db_port />
+	<cfset iPort = qInstances.db_port />
 </cfif>
 
-<cfif Trim(qGetDB.db_host) IS "">
-	<!--- Get Host server --->
+<!--- Get Host server --->
+<cfif Trim(qInstances.db_host) IS "" >
 	<cfquery name="qHost" datasource="OTR_SYSMAN">
 		select distinct b.property_value
 		  from mgmt_target_properties a, mgmt_target_properties b
 		 where a.target_guid = b.target_guid
-		   and   UPPER(a.property_value) = '#Trim(UCase(oraSID))#'
-		   and   b.property_name = 'MachineName'
+		   and UPPER(a.property_value) = '#Trim(UCase(qInstances.db_name))#'
+		   and b.property_name = 'MachineName'
 	</cfquery>
 	<cfset sHost = Trim(qHost.property_value) />
 <cfelse>
-	<cfset sHost = Trim(qGetDB.db_host) />
+	<cfset sHost = Trim(qInstances.db_host) />
 </cfif>
 
 <!--- Create Temporary Data Source --->
 <cfset s = StructNew()>
-<cfif qGetDB.db_rac IS 1>
-	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(qGetDB.db_servicename)#" />
+<cfif qInstances.db_rac IS 1>
+	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(qInstances.db_servicename)#" />
 <cfelse>
-	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qGetDB.db_name)#" />
+	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qInstances.db_name)#" />
 </cfif>
 <cfset s.drivername   = "oracle.jdbc.OracleDriver">
 <cfset s.databasename = "#UCase(oraSID)#">

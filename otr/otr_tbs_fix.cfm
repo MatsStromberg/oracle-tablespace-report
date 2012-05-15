@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -30,37 +30,60 @@
 <cfif IsDefined("URL.TBS") AND Trim(URL.TBS) GT ""><cfset oraTBS = Trim(URL.TBS) /><cfelse>No Tablespace passed<cfabort></cfif>
 
 <!--- Get the System Password --->
-<cfquery name="qGetDB" datasource="#application.datasource#">
-	select db_name, system_password
+<cfquery name="qInstances" datasource="#application.datasource#">
+	select db_name, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
 	from otr_db 
-	where db_name = '#Trim(oraSID)#'
+	where UPPER(db_name) = '#Trim(UCase(oraSID))#'
 	order by db_name
 </cfquery>
 
 <!--- If no password set, Abort --->
-<cfif Trim(qGetDB.system_password) IS "">
+<cfif Trim(qInstances.system_password) IS "">
 	No System PASSWORD defined<cfabort>
 <cfelse>
-	<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qGetDB.system_password)) />
+	<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
 </cfif>
 
 <!--- Get Listener Port --->
-<cfquery name="qPort" datasource="OTR_SYSMAN">
-	select distinct b.property_value
-	from mgmt_target_properties a, mgmt_target_properties b
-	where a.target_guid = b.target_guid
-	and   a.property_value = '#Trim(oraSID)#'
-	and   b.property_name = 'Port';
-</cfquery>
+<cfif Trim(qInstances.db_port) IS "">
+	<cfquery name="qPort" datasource="OTR_SYSMAN">
+		select distinct b.property_value
+		  from mgmt_target_properties a, mgmt_target_properties b
+		 where a.target_guid = b.target_guid
+		   and UPPER(a.property_value) = '#Trim(UCase(oraSID))#'
+		   and b.property_name = 'Port';
+	</cfquery>
+	<cfset iPort = qPort.property_value />
+<cfelse>
+	<cfset iPort = qInstances.db_port />
+</cfif>
+
+<!--- Get Host server from EM --->
+<cfif Trim(qInstances.db_host) IS "" >
+	<cfquery name="qHost" datasource="OTR_SYSMAN">
+		select distinct b.property_value
+		  from mgmt_target_properties a, mgmt_target_properties b
+		 where a.target_guid = b.target_guid
+		   and UPPER(a.property_value) = '#Trim(UCase(qInstances.db_name))#'
+		   and b.property_name = 'MachineName'
+	</cfquery>
+	<cfset sHost = Trim(qHost.property_value) />
+<cfelse>
+	<cfset sHost = Trim(qInstances.db_host) />
+</cfif>
 
 <!--- Create Temporary Data Source --->
 <cfset s = StructNew()>
-<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(oraSID)#.mbczh.ch:#qPort.property_value#:#UCase(oraSID)#">
+<cfif qInstances.db_rac IS 1>
+	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(qInstances.db_servicename)#" />
+<cfelse>
+	<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qInstances.db_name)#" />
+</cfif>
 <cfset s.drivername   = "oracle.jdbc.OracleDriver">
 <cfset s.databasename = "#UCase(oraSID)#">
 <cfset s.username     = "system">
 <cfset s.password     = "#sPassword#">
-<cfset s.port         = "#qPort.property_value#">
+<cfset s.port         = "#iPort#">
 
 <cfif DataSourceIsValid("#UCase(oraSID)#temp")>
 	<cfset DataSourceDelete( "#UCase(oraSID)#temp" )>
@@ -93,7 +116,7 @@
 
 <html>
 <head>
-	<title><cfoutput>#application.company#</cfoutput> - Tablespace Adjustments</title>
+	<title><cfoutput>#Application.company#</cfoutput> - Tablespace Adjustments</title>
 <link rel="stylesheet" href="JScripts/jQuery/jquery.tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
@@ -164,7 +187,7 @@ function confirmation(txt, url) {
 <body>
 <cfinclude template="_top_menu.cfm">
 <div align="center">
-<h2><cfoutput>#application.company#</cfoutput> - Tablespace Adjustments</h2>
+<h2><cfoutput>#Application.company#</cfoutput> - Tablespace Adjustments</h2>
 <div align="center">
 <table border="0" cellpadding="5">
 <tr>
