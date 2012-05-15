@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -52,8 +52,8 @@
 	<cftry>
 		<cfoutput>#qInstances.db_name#</cfoutput><br />
 		
+		<!--- Get Listener Port --->
 		<cfif Trim(qInstances.db_port) IS "">
-			<!--- Get Listener Port --->
 			<cfquery name="qPort" datasource="OTR_SYSMAN">
 				select distinct b.property_value
 				from mgmt_target_properties a, mgmt_target_properties b
@@ -66,8 +66,8 @@
 			<cfset iPort = #qInstances.db_port# />
 		</cfif>
 
+		<!--- Get Host server --->
 		<cfif Trim(qInstances.db_host) IS "">
-			<!--- Get Host server --->
 			<cfquery name="qHost" datasource="OTR_SYSMAN">
 				select distinct b.property_value
 				from mgmt_target_properties a, mgmt_target_properties b
@@ -111,6 +111,7 @@
 		</cfquery>
 		<!--- Update all thresholds to Default values --->
 		<cfoutput query="qTHdefault">
+			Warn: #qTHdefault.warning_value# Crit: #qTHdefault.critical_value#<br />
 			<cfquery name="qUpdateDefault" datasource="#Application.datasource#">
 				update otr_cust_appl_tbs
 					set threshold_warning = #Int(qTHdefault.warning_value)#,
@@ -127,6 +128,7 @@
 		</cfquery>
 		<!--- Update all none-defaull values --->
 		<cfoutput query="qTHnonedefault">
+			Warn: #qTHnonedefault.warning_value# Crit: #qTHnonedefault.critical_value# TBS: #qTHnonedefault.object_name#<br />
 			<cfquery name="qUpdateNoneDefault" datasource="#Application.datasource#">
 				update otr_cust_appl_tbs
 					set threshold_warning = #Int(qTHnonedefault.warning_value)#,
