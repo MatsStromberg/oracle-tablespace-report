@@ -24,9 +24,10 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<!--- Delete any snapshot done TODAY --->
+<!--- Delete any snapshot done TODAY except from Instances in Blackout status --->
 <cfset dToday = DateFormat(Now(),'dd.mm.yyyy')>
 <!--- <cfoutput>#dToday#<br />#CGI.HTTP_REFERER#</cfoutput> --->
+<!---
 <cfquery name="qDelete" datasource="#Application.datasource#">
 	delete from otr_db_space_rep a, otr_db b
 	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
@@ -44,6 +45,19 @@
 	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
 	  and   a.db_name = b.db_name
 	  and   b.db_blackout = 0
+</cfquery>
+--->
+<cfquery name="qDelete" datasource="#Application.datasource#">
+	delete from otr_db_space_rep a
+	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+</cfquery>
+<cfquery name="qDelete2" datasource="#Application.datasource#">
+	delete from otr_nfs_space_rep a
+	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+</cfquery>
+<cfquery name="qDelete3" datasource="#Application.datasource#">
+	delete from otr_asm_space_rep a
+	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
 </cfquery>
 <!--- SnapShot Routine --->
 <cfset dRepDate = CreateODBCDateTime(CreateDateTime(Year(Now()),Month(Now()),Day(Now()),Hour(Now()),Minute(Now()),0)) />
