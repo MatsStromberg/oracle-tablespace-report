@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -27,5 +27,5 @@
 		<cfoutput>
 		Copyright 2010 - #Year(Now())#, <a href="http://www.network23.net/otr/" target="_blank" onfocus="this.blur();">NETWORK 23</a>
 		OpenBD Version: #server.coldfusion.productversion# - OpenBD Build: #server.bluedragon.builddate#<br />
-		<a href="#sHost#bluedragon/administrator/login.cfm" target="_blank" onfocus="this.blur();">Open BlueDragon Administrator</a>
+		<a href="#sHost#bluedragon/administrator/login.cfm" target="_blank" onfocus="this.blur();" class="otrtip" title="<div align='center'>Setup Datasources, Scheduled Tasks<br />or generally configure your<br />Open BlueDragon System</div>">Open BlueDragon Administrator</a>
 		</cfoutput>
