@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -546,7 +546,7 @@ function submitForm() {
 <cfif showNFSsum IS 1><tr>
 	<td colspan="3">&nbsp;</td>
 	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(nfsSubSum,"999,999")#</td>
-	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(nfsSubFreeSum,"999,999")#</td>
+	<td style="text-align: right; font-weight: bold; text-decoration:underline;<cfif nSubCanGrowToSum GT nfsSubFreeSum> color: red;</cfif>"<cfif nSubCanGrowToSum GT nfsSubFreeSum> class="otrtip" title="<div align='center'>Storage space is<br /><strong>smaller</strong> than possible<br />Database space!!!</div>"</cfif>>#LSNumberFormat(nfsSubFreeSum,"999,999")#</td>
 	<td colspan="2">&nbsp;</td>
 </tr><cfset nfsTotSum = nfsTotSum + nfsSubSum /><cfset nfsTotFreeSum = nfsTotFreeSum + nfsSubFreeSum /></cfif>
 <cfquery name="qASMreport" datasource="#Application.datasource#">
@@ -581,7 +581,7 @@ function submitForm() {
 	<td style="text-align: right;">Sub Total (MB):</td>
 	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubUsedSum,"999,999")#</td>
 	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubFreeSum,"999,999")#</td>
-	<td style="text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubTotalSum,"999,999")#</td>
+	<td style="text-align: right; font-weight: bold; text-decoration:underline;<cfif nSubCanGrowToSum GT asmSubTotalSum> color: red; cursor: help;</cfif>"<cfif nSubCanGrowToSum GT asmSubTotalSum> class="otrtip" title="<div align='center'>Storage space is<br /><strong>smaller</strong> than possible<br />Database space!!!</div>"</cfif>>#LSNumberFormat(asmSubTotalSum,"999,999")#</td>
 	<td colspan="3">&nbsp;</td>
 </tr><cfset asmTotUsedSum = (asmTotUsedSum + asmSubUsedSum) /><cfset asmTotFreeSum = asmTotFreeSum + asmSubFreeSum /><cfset asmTotTotalSum = asmTotTotalSum + asmSubTotalSum /></cfif>
 </table>
