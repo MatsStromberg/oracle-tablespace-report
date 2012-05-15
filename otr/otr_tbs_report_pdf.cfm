@@ -177,7 +177,7 @@
 <cfif showNFSsum IS 1><tr>
 	<td colspan="3">&nbsp;</td>
 	<td style="font-size: 8pt; text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(nfsSubSum,"999,999")#</td>
-	<td style="font-size: 8pt; text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(nfsSubFreeSum,"999,999")#</td>
+	<td style="font-size: 8pt; text-align: right; font-weight: bold; text-decoration:underline;<cfif nSubCanGrowToSum GT nfsSubFreeSum> color: red;</cfif>">#LSNumberFormat(nfsSubFreeSum,"999,999")#</td>
 	<td colspan="2">&nbsp;</td>
 </tr><cfset nfsTotSum = nfsTotSum + nfsSubSum /><cfset nfsTotFreeSum = nfsTotFreeSum + nfsSubFreeSum /></cfif>
 <cfquery name="qASMreport" datasource="#Application.datasource#">
@@ -212,7 +212,7 @@
 	<td width="220">&nbsp;</td>
 	<td style="font-size: 8pt; text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubUsedSum,"999,999")#</td>
 	<td style="font-size: 8pt; text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubFreeSum,"999,999")#</td>
-	<td style="font-size: 8pt; text-align: right; font-weight: bold; text-decoration:underline;">#LSNumberFormat(asmSubTotalSum,"999,999")#</td>
+	<td style="font-size: 8pt; text-align: right; font-weight: bold; text-decoration:underline;<cfif nSubCanGrowToSum GT asmSubTotalSum> color: red;</cfif>">#LSNumberFormat(asmSubTotalSum,"999,999")#</td>
 	<td colspan="3">&nbsp;</td>
 </tr><cfset asmTotUsedSum = (asmTotUsedSum + asmSubUsedSum) /><cfset asmTotFreeSum = asmTotFreeSum + asmSubFreeSum /><cfset asmTotTotalSum = asmTotTotalSum + asmSubTotalSum /></cfif>
 <!--- </table> --->
