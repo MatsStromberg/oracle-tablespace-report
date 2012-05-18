@@ -24,11 +24,17 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!--- 
+	Long over due Change Log
+	2012.05.16	mst	Now using Active Critical Threshold stored on the Target DB 
+	2012.05.18	mst	Changed the check on used % to use GE rather than GT which is
+					what EM is using.
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select db.db_name, db.system_password, db.db_host, db.db_port, db_rac, db_servicename, db_blackout
-	  from otr_db db
+	select db_name, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
+	  from otr_db
 	 order by db_name
 </cfquery>
 <cfsetting enablecfoutputonly="false">
@@ -95,7 +101,7 @@ function confirmation(txt, url) {
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
 		<cfif qInstances.db_rac IS 1>
-                        <cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(qInstances.db_servicename)#" />
+			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(qInstances.db_servicename)#" />
 		<cfelse>
 			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qInstances.db_name)#" />
 		</cfif>
@@ -139,7 +145,11 @@ function confirmation(txt, url) {
 		        AND NOT (d.extent_management = 'LOCAL' AND d.CONTENTS = 'TEMPORARY')
 		        AND d.tablespace_name LIKE '%'
 				AND ROUND(((a.maxbytes - a.BYTES) + NVL(b.BYTES, 0)) / 1024 / 1024, 2) < #Application.tablespace.mb_left#
-				AND ROUND(((a.maxbytes - ((a.maxbytes - a.BYTES) + NVL (b.BYTES, 0))) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
+				AND ROUND(((a.maxbytes - ((a.maxbytes - a.BYTES) + NVL (b.BYTES, 0))) / a.maxbytes) * 100, 2) >= (select NVL((select critical_value from sys.dba_thresholds 
+									 where metrics_name like '%Tablespace Space Usage' 
+									   and object_name = b.tablespace_name),(select critical_value from sys.dba_thresholds
+									 where metrics_name = 'Tablespace Space Usage'
+									   and nvl(object_name,'-OTR-TBS-') = '-OTR-TBS-')) critical from dual)
 		   UNION ALL
 		   SELECT   NVL(d.tablespace_name, NVL (a.tablespace_name, 'UNKOWN')) tablespace_name,
 		            ROUND(a.BYTES / 1024 / 1024, 0) mb_used,
@@ -169,7 +179,11 @@ function confirmation(txt, url) {
 		        AND d.CONTENTS = 'TEMPORARY'
 		        AND d.tablespace_name LIKE '%'
 				AND ROUND((a.maxbytes - t.BYTES) / 1024 / 1024, 2) < #Application.tablespace.mb_left#
-				AND ROUND(((a.maxbytes - NVL(a.maxbytes - t.BYTES, 0)) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
+				AND ROUND(((a.maxbytes - NVL(a.maxbytes - t.BYTES, 0)) / a.maxbytes) * 100, 2) >= (select NVL((select critical_value from sys.dba_thresholds 
+									 where metrics_name like '%Tablespace Space Usage' 
+									   and object_name = d.tablespace_name),(select critical_value from sys.dba_thresholds
+									 where metrics_name = 'Tablespace Space Usage'
+									   and nvl(object_name,'-OTR-TBS-') = '-OTR-TBS-')) critical from dual)
 		   UNION ALL
 		   SELECT   NVL(d.tablespace_name,
 		                 NVL(a.tablespace_name, 'UNKOWN')
@@ -206,7 +220,11 @@ function confirmation(txt, url) {
 		        AND d.CONTENTS = 'UNDO'
 		        AND d.tablespace_name LIKE '%'
 				AND ROUND(NVL(a.maxbytes - u.BYTES, a.maxbytes) / 1024 / 1024, 2) < #Application.tablespace.mb_left#
-				AND ROUND(((a.maxbytes - NVL (a.maxbytes - u.BYTES, a.maxbytes)) / a.maxbytes) * 100, 2) > #Application.tablespace.prc_used#
+				AND ROUND(((a.maxbytes - NVL (a.maxbytes - u.BYTES, a.maxbytes)) / a.maxbytes) * 100, 2) >= (select NVL((select critical_value from sys.dba_thresholds 
+									 where metrics_name like '%Tablespace Space Usage' 
+									   and object_name = d.tablespace_name),(select critical_value from sys.dba_thresholds
+									 where metrics_name = 'Tablespace Space Usage'
+									   and nvl(object_name,'-OTR-TBS-') = '-OTR-TBS-')) critical from dual)
 		   ORDER BY 7 DESC
 		</cfquery>
 		</cfif>
@@ -228,7 +246,7 @@ function confirmation(txt, url) {
 	<tr<cfif qInstances.CurrentRow mod 2> class="alternate"</cfif>>
 		<td>#qInstances.db_name#</td>
 		<!--- ><td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS<cfelse>&nbsp;</cfif></td> --->
-		<td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"<cfelseif iDBErr IS 4> title="Instance is in#chr(13)#Blackout status"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1 OR iDBErr IS 4>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iDBErr IS 4>Blackout<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS</a><cfelse>&nbsp;</cfif></td>
+		<td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc#% used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"<cfelseif iDBErr IS 4> title="Instance is in#chr(13)#Blackout status"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1 OR iDBErr IS 4>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iDBErr IS 4>Blackout<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS</a><cfelse>&nbsp;</cfif></td>
 	</tr></cfif>
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
