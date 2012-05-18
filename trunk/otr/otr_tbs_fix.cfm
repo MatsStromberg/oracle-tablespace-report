@@ -24,6 +24,10 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!--- 
+	Long over due Change Log
+	2012.05.16	mst	Fixed adding and Increasing Tablespaces stored on ASM 
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cfsetting enablecfoutputonly="false">
 <cfif IsDefined("URL.SID") AND Trim(URL.SID) GT ""><cfset oraSID = Trim(URL.SID) /><cfelse>No SID passed<cfabort></cfif>
@@ -31,7 +35,7 @@
 
 <!--- Get the System Password --->
 <cfquery name="qInstances" datasource="#application.datasource#">
-	select db_name, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
+	select db_name, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout
 	from otr_db 
 	where UPPER(db_name) = '#Trim(UCase(oraSID))#'
 	order by db_name
@@ -202,13 +206,13 @@ function confirmation(txt, url) {
 					<th>Datafile</th>
 					<th style="text-align: right;">Can grow to</th>
 					<th style="text-align: right;">Used</th>
-					<th>Increase with 2GB</th>
+					<th>Increase with</th>
 				</tr>
 				<cfoutput query="qDBFinfo"><tr>
 					<td>#qDBFinfo.file_name#</td>
 					<td align="right">#NumberFormat(qDBFinfo.max_mb)# MB</td>
 					<td align="right">#NumberFormat(qDBFinfo.used_mb)# MB</td>
-					<td align="center"><a href="otr_tbs_dofix.cfm?action=increase&SID=#oraSID#&TBS=#oraTBS#&DBF=#qDBFinfo.file_name#&BIGFILE=#qTBSinfo.bigfile#">Yes</a></td>
+					<td align="center"><a href="otr_tbs_dofix.cfm?action=increase&SID=#oraSID#&TBS=#oraTBS#&DBF=#qDBFinfo.file_name#&BIGFILE=#qTBSinfo.bigfile#&CGT=1024" onFocus="this.blur();" class="otrtip" title="<div align='center'>Increase the *Can Grow To*<br />with 1GB more.</div>">1GB</a>&nbsp;&nbsp;&nbsp;<a href="otr_tbs_dofix.cfm?action=increase&SID=#oraSID#&TBS=#oraTBS#&DBF=#qDBFinfo.file_name#&BIGFILE=#qTBSinfo.bigfile#&CGT=2048" onFocus="this.blur();" class="otrtip" title="<div align='center'>Increase the *Can Grow To*<br />with 2GB more.</div>">2GB</a></td>
 				</tr></cfoutput>
 				</table>
 			<cfelse>
@@ -217,13 +221,13 @@ function confirmation(txt, url) {
 					<th>Datafile</th>
 					<th style="text-align: right;">Can grow to</th>
 					<th style="text-align: right;">Used</th>
-					<th>Increase with 2GB</th>
+					<th>Increase with</th>
 				</tr>
 				<cfoutput query="qDBFinfo"><cfif qDBFinfo.max_mb NEQ 0><tr>
 					<td>#qDBFinfo.file_name#<cfset sFileName = Trim(qDBFinfo.file_name) /></td>
 					<td align="right">#NumberFormat(qDBFinfo.max_mb)# MB</td>
 					<td align="right">#NumberFormat(qDBFinfo.used_mb)# MB</td>
-					<td align="center"><a href="otr_tbs_dofix.cfm?action=increase&SID=#oraSID#&TBS=#oraTBS#&DBF=#qDBFinfo.file_name#&BIGFILE=#qTBSinfo.bigfile#">Yes</a></td>
+					<td align="center"><a href="otr_tbs_dofix.cfm?action=increase&SID=#oraSID#&TBS=#oraTBS#&DBF=#qDBFinfo.file_name#&BIGFILE=#qTBSinfo.bigfile#&CGT=1024" onFocus="this.blur();" class="otrtip" title="<div align='center'>Increase the *Can Grow To*<br />with 1GB more.</div>">1GB</a>&nbsp;&nbsp;<a href="otr_tbs_dofix.cfm?action=increase&SID=#oraSID#&TBS=#oraTBS#&DBF=#qDBFinfo.file_name#&BIGFILE=#qTBSinfo.bigfile#&CGT=2048" onFocus="this.blur();" class="otrtip" title="<div align='center'>Increase the *Can Grow To*<br />with 2GB more.</div>">2GB</a></td>
 				</tr></cfif></cfoutput><cfif qTBSinfo.bigfile IS "NO">
 				<tr>
 					<td colspan="4" style="color: #f00; font-weight: bold;">This is not a BIGFILE Tablespace so the file should not get bigger than 32GB!</td>
@@ -234,41 +238,45 @@ function confirmation(txt, url) {
 				<tr>
 					<td colspan="4">There are currently <cfoutput><strong>#qDBFinfo.RecordCount#</strong></cfoutput> file<cfif qDBFinfo.RecordCount GT 1>s</cfif> in this Tablespace. Most likely you should add a new file to it.</td>
 				</tr>
-				<cfset sFileName = ReplaceNoCase(sFileName, ".dbf", "") /><cfset sFileName2 = sFileName />
-				<cfset iLen = Len(sFileName) />
-				<cfloop from="#iLen#" to="#Int(iLen - 5)#" step="-1" index="a">
-					<cfif ! IsNumeric(#Mid(sFileName,a,1)#)><cfset sFileName = Left(sFileName, a) & Int(qDBFinfo.RecordCount+1) & ".dbf" /><!--- <cfoutput>#sFileName#</cfoutput> ---><cfbreak></cfif>
-				</cfloop>
-				<cfset iCnt = 0 />
-				<cfset iLoop = 1 />
-				<cfloop condition="iLoop EQ 1">
-					<!--- <cfoutput>#iCnt# #sFilename#</cfoutput><br /> --->
-					<cfquery name="qCheck" datasource="#UCase(oraSID)#temp">
-						select file_name 
-						from dba_data_files
-						where tablespace_name = '#oraTBS#'
-						  and UPPER(file_name) = '#UCASE(sFileName)#'
-						order by tablespace_name, relative_fno
-					</cfquery>
-					<!--- <cfoutput>RecordCount: #qCheck.RecordCount#</cfoutput> --->
-					<cfif qCheck.RecordCount IS 0><cfset iLoop = 0 /></cfif>
-					<!--- <cfdump><cfexit> --->
-					<cfif qCheck.RecordCount NEQ 0>
-						<cfset iCnt = iCnt + 1 />
-						<!--- <cfoutput>#Int(qDBFinfo.RecordCount+iCnt)#</cfoutput> --->
-						<cfset sFileName = sFileName2 />
-						<cfloop from="#iLen#" to="#Int(iLen - 5)#" step="-1" index="a">
-							<cfif ! IsNumeric(#Mid(sFileName,a,1)#)><cfset sFileName = Left(sFileName, a) & Int(qDBFinfo.RecordCount-1+iCnt) & ".dbf" /><cfbreak></cfif>
-						</cfloop>
-						<!--- <cfoutput>#sFileName#</cfoutput> --->
-					</cfif>
-					<!--- <cfexit> --->
-				</cfloop>
+				<cfif qInstances.db_asm IS 0>
+					<cfset sFileName = ReplaceNoCase(sFileName, ".dbf", "") /><cfset sFileName2 = sFileName />
+					<cfset iLen = Len(sFileName) />
+					<cfloop from="#iLen#" to="#Int(iLen - 5)#" step="-1" index="a">
+						<cfif ! IsNumeric(#Mid(sFileName,a,1)#)><cfset sFileName = Left(sFileName, a) & Int(qDBFinfo.RecordCount+1) & ".dbf" /><!--- <cfoutput>#sFileName#</cfoutput> ---><cfbreak></cfif>
+					</cfloop>
+					<cfset iCnt = 0 />
+					<cfset iLoop = 1 />
+					<cfloop condition="iLoop EQ 1">
+						<!--- <cfoutput>#iCnt# #sFilename#</cfoutput><br /> --->
+						<cfquery name="qCheck" datasource="#UCase(oraSID)#temp">
+							select file_name 
+							from dba_data_files
+							where tablespace_name = '#oraTBS#'
+							  and UPPER(file_name) = '#UCASE(sFileName)#'
+							order by tablespace_name, relative_fno
+						</cfquery>
+						<!--- <cfoutput>RecordCount: #qCheck.RecordCount#</cfoutput> --->
+						<cfif qCheck.RecordCount IS 0><cfset iLoop = 0 /></cfif>
+						<!--- <cfdump><cfexit> --->
+						<cfif qCheck.RecordCount NEQ 0>
+							<cfset iCnt = iCnt + 1 />
+							<!--- <cfoutput>#Int(qDBFinfo.RecordCount+iCnt)#</cfoutput> --->
+							<cfset sFileName = sFileName2 />
+							<cfloop from="#iLen#" to="#Int(iLen - 5)#" step="-1" index="a">
+								<cfif ! IsNumeric(#Mid(sFileName,a,1)#)><cfset sFileName = Left(sFileName, a) & Int(qDBFinfo.RecordCount-1+iCnt) & ".dbf" /><cfbreak></cfif>
+							</cfloop>
+							<!--- <cfoutput>#sFileName#</cfoutput> --->
+						</cfif>
+						<!--- <cfexit> --->
+					</cfloop>
+				<cfelse>
+					<cfset sFileName = Left(sFileName, Find(".",sFileName,1)-1)>
+				</cfif>
 				<tr><cfoutput>
-					<td>#sFileName#</td>
-					<td align="right">#NumberFormat(2000)# MB</td>
-					<td align="right">#NumberFormat(100)# MB</td>
-					<td align="center"><a href="otr_tbs_dofix.cfm?action=addfile&SID=#oraSID#&TBS=#oraTBS#&DBF=#sFileName#&BIGFILE=#qTBSinfo.bigfile#">ADD FILE</td>
+					<td>#sFileName#<cfif qInstances.db_asm IS 1>.???.?????????</cfif></td>
+					<td align="right">#NumberFormat(2048)# MB</td>
+					<td align="right">#NumberFormat(128)# MB</td>
+					<td align="center"><a href="otr_tbs_dofix.cfm?action=addfile&SID=#oraSID#&TBS=#oraTBS#&DBF=#sFileName#&BIGFILE=#qTBSinfo.bigfile#" onFocus="this.blur();" class="otrtip" title="<div align='center'>Add a new file to<br />this tablespace.</div>">ADD FILE</td>
 				</cfoutput></tr>
 				</table>
 			</cfif>
@@ -276,7 +284,7 @@ function confirmation(txt, url) {
 				<cfif qTBSinfo.bigfile IS "NO">
 				<p>
 					We have made our best effort to make sure this filename is not allready used.<br />
-					At the moment we're only expanded the storage usage with 100MB but <strong>Please</strong><br />
+					At the moment we're only expanded the storage usage with 128MB but <strong>Please</strong><br />
 					make sure there is enough space on the storage for this file to grow.
 				</p>
 				<cfelse>

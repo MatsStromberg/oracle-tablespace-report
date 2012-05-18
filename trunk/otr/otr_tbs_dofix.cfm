@@ -1,3 +1,33 @@
+<!---
+    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    
+    Contributing Developers:
+    Mats Strömberg - ms@network23.net
+
+    This file is part of the Oracle Tablespace Report.
+
+    The Oracle Tablespace Report is free software: you can redistribute 
+    it and/or modify it under the terms of the GNU General Public License 
+    as published by the Free Software Foundation, either version 3 of the 
+    License, or (at your option) any later version.
+
+    The Oracle Tablespace Report is distributed in the hope that it will 
+    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+    General Public License for more details.
+	
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
+    
+    You should have received a copy of the GNU General Public License 
+    along with the Oracle Tablespace Report.  If not, see 
+    <http://www.gnu.org/licenses/>.
+--->
+<!--- 
+	Long over due Change Log
+	2012.05.16	mst	Fixed adding and Increasing Tablespaces stored on ASM 
+--->
 <cfif IsDefined("URL.action")>
 	<cfswitch expression="#URL.action#">
 		<cfcase value="increase">
@@ -17,11 +47,14 @@
 <cfif IsDefined("URL.SID") AND Trim(URL.SID) GT ""><cfset oraSID = Trim(URL.SID) /><cfelse>No SID passed<cfabort></cfif>
 <cfif IsDefined("URL.TBS") AND Trim(URL.TBS) GT ""><cfset oraTBS = Trim(URL.TBS) /><cfelse>No Tablespace passed<cfabort></cfif>
 <cfif IsDefined("URL.DBF") AND Trim(URL.DBF) GT ""><cfset oraDBF = Trim(URL.DBF) /><cfelse>No Filename passed<cfabort></cfif>
+<cfif #URL.action# IS "increase">
+	<cfif IsDefined("URL.CGT") AND Trim(URL.CGT) GT ""><cfset oraCGT = Trim(URL.CGT) /><cfelse>No Increase To passed<cfabort></cfif>
+</cfif>
 <cfif IsDefined("URL.BIGFILE") AND Trim(URL.BIGFILE) GT ""><cfset oraBIGFILE = Trim(URL.BIGFILE) /><cfelse>No info about BIGFILE passed<cfabort></cfif>
 
 <!--- Get the System Password --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select db_name, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
+	select db_name, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout
 	from otr_db 
 	where UPPER(db_name) = '#Trim(UCase(oraSID))#'
 	order by db_name
@@ -93,7 +126,7 @@
 		where tablespace_name = '#oraTBS#'
 		order by tablespace_name, relative_fno
 	</cfquery>
-	<cfset nNewSize = NumberFormat(qDBFinfo.max_mb + 2000.0, '999999999') />
+	<cfset nNewSize = NumberFormat(qDBFinfo.max_mb + #oraCGT#, '999999999') />
 	<cfif dIncrease IS 1>
 		<cfquery name="qIncrease" datasource="#UCase(oraSID)#temp">
 			ALTER TABLESPACE #oraTBS# AUTOEXTEND ON MAXSIZE #nNewSize#M
@@ -106,19 +139,31 @@
 			select file_name, maxbytes/1024/1024 max_mb, user_bytes/1024/1024 used_mb 
 			from dba_data_files
 			where tablespace_name = '#oraTBS#'
-			  and file_name = '#oraDBF#'
+			  and file_name = '<cfif qInstances.db_asm IS 1>+</cfif>#Trim(oraDBF)#'
 			order by tablespace_name, relative_fno
 		</cfquery>
-		<cfset nNewSize = NumberFormat(qDBFinfo.max_mb + 2000.0,'9999999') />
-		<cfquery name="qIncrease" datasource="#UCase(oraSID)#temp">
-			ALTER DATABASE DATAFILE '#oraDBF#' AUTOEXTEND ON MAXSIZE #Int(nNewSize)#M
-		</cfquery>
+		<cfset nNewSize = NumberFormat(qDBFinfo.max_mb + #oraCGT#,'9999999') />
+		<cfif qInstances.db_asm IS 1>
+			<cfquery name="qIncrease" datasource="#UCase(oraSID)#temp">
+				ALTER DATABASE DATAFILE '+#Trim(oraDBF)#' AUTOEXTEND ON MAXSIZE #Int(nNewSize)#M
+			</cfquery>
+		<cfelse>
+			<cfquery name="qIncrease" datasource="#UCase(oraSID)#temp">
+				ALTER DATABASE DATAFILE '#oraDBF#' AUTOEXTEND ON MAXSIZE #Int(nNewSize)#M
+			</cfquery>
+		</cfif>
 		<!--- <cfoutput>ALTER DATABASE DATAFILE '#oraDBF#' AUTOEXTEND ON MAXSIZE #nNewSize#M;</cfoutput> --->
 	</cfif>
 	<cfif dAddFile IS 1>
-		<cfquery name="qAddFile" datasource="#UCase(oraSID)#temp">
-			ALTER TABLESPACE "#oraTBS#" ADD DATAFILE '#oraDBF#' SIZE 100M AUTOEXTEND ON NEXT 100M MAXSIZE 2000M
-		</cfquery>
+		<cfif qInstances.db_asm IS 1>
+			<cfquery name="qAddFile" datasource="#UCase(oraSID)#temp">
+				ALTER TABLESPACE "#oraTBS#" ADD DATAFILE '+#Trim(Left(oraDBF,Find("/",oraDBF,1)-1))#' SIZE 128M AUTOEXTEND ON NEXT 128M MAXSIZE 2048M
+			</cfquery>
+		<cfelse>
+			<cfquery name="qAddFile" datasource="#UCase(oraSID)#temp">
+				ALTER TABLESPACE "#oraTBS#" ADD DATAFILE '#oraDBF#' SIZE 128M AUTOEXTEND ON NEXT 128M MAXSIZE 2048M
+			</cfquery>
+		</cfif>
 		<!--- <cfoutput>ALTER TABLESPACE "#oraTBS#" ADD DATAFILE '#oraDBF#' SIZE 100M AUTOEXTEND ON NEXT 100M MAXSIZE 2000M;</cfoutput> --->
 	</cfif>
 </cfif>
@@ -130,7 +175,7 @@
 <cfif Application.mailserver IS NOT "">
 	<cfmail from="#Application.dba_group_mail#" 
 			to="#Application.dba_group_mail#" 
-			subject="Tablespace #oraDBF# on #UCase(oraSID)# just got another 2GB!" 
+			subject="Tablespace #oraTBS# on #UCase(oraSID)# just got another #oraCGT# MB!" 
 			server="#Application.mailserver#" 
 			port="#Application.mailport#" 
 			timeout="#Application.mailtimeout#" 
@@ -138,9 +183,9 @@
 				<html>
 				<head><title>TABLESPACE ADJUSTED</title></head>
 				<body>
-					Tablespace <strong>#oraDBF#</strong> on Instance <strong>#UCase(oraSID)#</strong> was
-					just extended with 2 GB more.<br />
-					<strong>#UCase(oraSID)#</strong> is located on host <strong>#LCase(qHost.property_value)#</strong><br />
+					Tablespace <strong>#oraTBS#<cfif oraBIGFILE IS "MO"> File: <cfif qInstances.db_asm IS 1>+</cfif>#Trim(oraDBF)#</cfif></strong> on Instance <strong>#UCase(oraSID)#</strong> was
+					just extended with #oraCGT# MB more.<br />
+					<strong>#UCase(oraSID)#</strong> is located on host <strong>#LCase(sHost)#</strong><br />
 					Please make sure there is enough storage space available for this
 					tablespace to grow.
 				</body>
