@@ -45,7 +45,7 @@
 		select db_name, db_tbs_name, rep_date, db_tbs_real_used_mb, db_tbs_can_grow_mb, db_tbs_real_prc_used
 		 from otr_space_rep_v
 		where UPPER(db_name) = '#UCase(FORM.db_name)#'
-		  and   db_tbs_name not IN ('SYSTEM','SYSAUX','TEMP','UNDO','UNDOTBS1')
+		  -- and   db_tbs_name not IN ('SYSTEM','SYSAUX','TEMP','UNDO','UNDOTBS1')
 		  and   trunc(rep_date) between trunc(to_date('#form.from_date#','DD-MM-YYYY')) and trunc(to_date('#FORM.to_date#','DD-MM-YYYY'))
 		group by db_name, db_tbs_name, rep_date, db_tbs_real_used_mb, db_tbs_can_grow_mb, db_tbs_real_prc_used
 		order by db_name, db_tbs_name, rep_date
@@ -69,7 +69,7 @@
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
-	<title><cfoutput>#application.company#</cfoutput> - <cfoutput>#FORM.DB_NAME#</cfoutput> Tablespace Trend</title>
+	<title><cfoutput>#application.company#</cfoutput> - <cfoutput>#UCase(FORM.DB_NAME)#</cfoutput> Tablespace Trend</title>
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
 <!--
@@ -155,7 +155,7 @@ snow, springgreen, steelblue, tan, teal, thistle, tomato, turquoise, violet, vio
 <body>
 <cfinclude template="_top_menu.cfm">
 <div align="center">
-<h2><cfoutput>#application.company#</cfoutput> - <cfoutput>#FORM.DB_NAME#</cfoutput> Tablespace Trend</h2>
+<h2><cfoutput>#application.company#</cfoutput> - <cfoutput>#UCase(FORM.DB_NAME)#</cfoutput> Tablespace Trend</h2>
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">
