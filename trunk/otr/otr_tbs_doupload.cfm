@@ -24,6 +24,13 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!--- 
+	Long over due Change Log
+	2012.05.18	mst	Updating Target DB's with Warning and Critical Thresholds
+					set by the CSV or the Excel sheet.
+					Deleteing all Thresholds on the Target that has the same 
+					value as the Instance Default values.
+--->
 <cfsetting enablecfoutputonly="true" />
 <cfset cDirSep = FileSeparator() />
 <cfset bExcel = 0>
@@ -151,4 +158,179 @@
 	</cftry>
 </cfif>
 <!--- Is this an Excel or a CSV File ?? END --->
+
+<!--- Update Target Thresholds with the current values from OTR_CUST_APPL_TBS --->
+<!--- 
+For Decode Purpose....
+-- operator types
+OPERATOR_GT           CONSTANT BINARY_INTEGER := 0;
+OPERATOR_EQ           CONSTANT BINARY_INTEGER := 1;
+OPERATOR_LT           CONSTANT BINARY_INTEGER := 2;
+OPERATOR_LE           CONSTANT BINARY_INTEGER := 3;
+OPERATOR_GE           CONSTANT BINARY_INTEGER := 4;
+OPERATOR_CONTAINS     CONSTANT BINARY_INTEGER := 5;
+OPERATOR_NE           CONSTANT BINARY_INTEGER := 6;
+OPERATOR_DO_NOT_CHECK CONSTANT BINARY_INTEGER := 7;
+
+-- object types
+OBJECT_TYPE_SYSTEM       CONSTANT BINARY_INTEGER := 1;
+OBJECT_TYPE_FILE         CONSTANT BINARY_INTEGER := 2;
+OBJECT_TYPE_SERVICE      CONSTANT BINARY_INTEGER := 3;
+OBJECT_TYPE_EVENT_CLASS  CONSTANT BINARY_INTEGER := 4;
+OBJECT_TYPE_TABLESPACE   CONSTANT BINARY_INTEGER := 5;
+OBJECT_TYPE_SESSION      CONSTANT BINARY_INTEGER := 9;
+OBJECT_TYPE_WRCLIENT     CONSTANT BINARY_INTEGER := 16;
+
+-- message levels
+SUBTYPE SEVERITY_LEVEL_T IS PLS_INTEGER;
+LEVEL_CRITICAL      CONSTANT PLS_INTEGER := 1;
+LEVEL_WARNING       CONSTANT PLS_INTEGER := 5;
+LEVEL_CLEAR         CONSTANT PLS_INTEGER := 32;
+
+-- metrics names
+...
+TABLESPACE_PCT_FULL      CONSTANT BINARY_INTEGER := 9000;
+TABLESPACE_BYT_FREE      CONSTANT BINARY_INTEGER := 9001;
+...
+
+BEGIN
+DBMS_SERVER_ALERT.SET_THRESHOLD(
+   metrics_id              => DBMS_SERVER_ALERT.TABLESPACE_BYT_FREE,
+   warning_operator        => DBMS_SERVER_ALERT.OPERATOR_LE,
+   warning_value           => '10240',
+   critical_operator       => DBMS_SERVER_ALERT.OPERATOR_LE,
+   critical_value          => '2048',
+   observation_period      => 1,
+   consecutive_occurrences => 1,
+   instance_name           => NULL,
+   object_type             => DBMS_SERVER_ALERT.OBJECT_TYPE_TABLESPACE,
+   object_name             => 'USERS');
+
+DBMS_SERVER_ALERT.SET_THRESHOLD(
+   metrics_id              => DBMS_SERVER_ALERT.TABLESPACE_PCT_FULL,
+   warning_operator        => DBMS_SERVER_ALERT.OPERATOR_GT,
+   warning_value           => '0',
+   critical_operator       => DBMS_SERVER_ALERT.OPERATOR_GT,
+   critical_value          => '0',
+   observation_period      => 1,
+   consecutive_occurrences => 1,
+   instance_name           => NULL,
+   object_type             => DBMS_SERVER_ALERT.OBJECT_TYPE_TABLESPACE,
+   object_name             => 'USERS');
+END;
+/
+
+Set Threshold
+BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,4,'85',4,'97',1,1,NULL,5,'OTR_REP_DATA'); END;
+/
+
+Delete Threshold
+BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,NULL,NULL,NULL,NULL,1,1,NULL,5,'OTR_REP_DATA'); END;
+/
+
+--->
+<cfquery name="qInstances" datasource="#Application.datasource#">
+	select db_name, system_password, db_host, db_port, db_rac, db_servicename
+	  from otr_db
+	 where db_blackout = 0
+	 order by db_name
+</cfquery>
+
+<cfoutput query="qInstances">
+	<cftry>
+		<cfif Trim(qInstances.db_port) IS "">
+			<!--- Get Listener Port from EM --->
+			<cfquery name="qPort" datasource="OTR_SYSMAN">
+				select distinct b.property_value
+				from mgmt_target_properties a, mgmt_target_properties b
+				where a.target_guid = b.target_guid
+				and   UPPER(a.property_value) = '#Trim(UCase(qInstances.db_name))#'
+				and   b.property_name = 'Port'
+			</cfquery>
+			<cfset iPort = qPort.property_value />
+		<cfelse>
+			<cfset iPort = qInstances.db_port />
+		</cfif>
+
+		<cfif Trim(qInstances.db_host) IS "" >
+			<!--- Get Host server from EM --->
+			<cfquery name="qHost" datasource="OTR_SYSMAN">
+				select distinct b.property_value
+				from mgmt_target_properties a, mgmt_target_properties b
+				where a.target_guid = b.target_guid
+				and   UPPER(a.property_value) = '#Trim(UCase(qInstances.db_name))#'
+				and   b.property_name = 'MachineName'
+			</cfquery>
+			<cfset sHost = Trim(qHost.property_value) />
+		<cfelse>
+			<cfset sHost = Trim(qInstances.db_host) />
+		</cfif>
+
+		<!--- Decrypt the SYSTEM Password --->
+		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
+		<!--- Create Temporary Data Source --->
+		<cfset s = StructNew() />
+		<cfif qInstances.db_rac IS 1>
+			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#/#UCase(qInstances.db_servicename)#" />
+		<cfelse>
+			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qInstances.db_name)#" />
+		</cfif>
+		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
+		<cfset s.databasename = "#UCase(qInstances.db_name)#" />
+		<cfset s.username     = "system" />
+		<cfset s.password     = "#sPassword#" />
+		<cfset s.port         = "#iPort#" />
+
+		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
+			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
+		</cfif>
+		<cfif NOT DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
+			<cfset DataSourceCreate("#UCase(qInstances.db_name)#temp", s) />
+		</cfif>
+
+		<cfquery name="qTBSthreshold" datasource="#Application.datasource#">
+			select db_name, db_tbs_name, threshold_warning, threshold_critical
+			  from OTR_CUST_APPL_TBS
+			 where db_name = '#UCase(qInstances.db_name)#'
+			 order by db_name, db_tbs_name
+		</cfquery>
+		<cfloop query="qTBSthreshold">
+			<cfquery name="qUpdateThresholds" datasource="#UCase(qInstances.db_name)#temp">
+				BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(<cfoutput>9000,4,'#qTBSthreshold.threshold_warning#',4,'#qTBSthreshold.threshold_critical#',1,1,NULL,5,'#qTBSthreshold.db_tbs_name#'</cfoutput>); END;
+			</cfquery>
+		</cfloop>
+		<!--- Lookup Default Threshold --->
+		<cfquery name="qTHdefault" datasource="#UCase(qInstances.db_name)#temp">
+			select warning_value, critical_value
+			 from sys.dba_thresholds
+			where metrics_name = 'Tablespace Space Usage'
+			  and nvl(object_name,'-OTR-TBS-') = '-OTR-TBS-'
+		</cfquery>
+		<!--- Lookup all none-default Thresholds --->	
+		<cfquery name="qTHnonedefault" datasource="#UCase(qInstances.db_name)#temp">
+			select warning_value, critical_value, object_name
+			 from sys.dba_thresholds
+			where metrics_name like '%Tablespace Space Usage'
+			  and nvl(object_name,'-OTR-TBS-') <> '-OTR-TBS-'
+		</cfquery>
+		<!--- Delete Thresholds that have the default values --->
+		<cfloop query="qTHnonedefault">
+			<cfif qTHnonedefault.warning_value IS qTHdefault.warning_value AND qTHnonedefault.critical_value IS qTHdefault.critical_value>
+				<cfquery name="qDeleteThresholds" datasource="#UCase(qInstances.db_name)#temp">
+					BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,NULL,NULL,NULL,NULL,1,1,NULL,5,'<cfoutput>#qTHnonedefault.object_name#</cfoutput>'); END;
+				</cfquery>
+			</cfif>
+		</cfloop>
+
+
+		<cfcatch type="Database">
+			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
+				<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
+			</cfif>
+		</cfcatch>
+	</cftry>
+	<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
+		<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
+	</cfif>
+</cfoutput>
 <cflocation url="otr_tbs.cfm" addtoken="No">
