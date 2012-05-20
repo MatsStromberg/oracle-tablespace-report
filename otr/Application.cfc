@@ -24,6 +24,11 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!--- 
+	Long over due Change Log
+	2012.05.20	mst	Application.tablespace.prc_used is not used anymore. 
+					This value is picked up from the Targets Thresholds.
+--->
 <cfcomponent displayname="Application" output="false" hint="Application.cfc for OTR Tablespace Monitoring">
 
 	<cfset this.name = "OTR_TABLESPACE_REPORT" />
@@ -74,7 +79,7 @@
 		<!--- Password Hash Key --->
 		<cfset Application.system_pw_hash = "otrrep$system$hash" />
 		<!--- Tablespace Warning Levels --->
-		<cfset Application.tablespace.prc_used = 98 />
+		<!--- <cfset Application.tablespace.prc_used = 98 /> --->
 		<cfset Application.tablespace.mb_left = 1800 />
 	</cffunction>
 
