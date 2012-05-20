@@ -24,56 +24,11 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-
-<!--- Update OTR_DB with Host name and Listener Port --->
-<!---
-<cfquery name="qDB" datasource="#Application.datasource#">
-	select DB_NAME
-	from OTR_DB
-	ORDER BY DB_NAME
-</cfquery>
-<cfoutput query="qDB">
-	<!--- Get Listener Port --->
-	<cfquery name="qP" datasource="OTR_SYSMAN">
-		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   a.property_value = '#Trim(qDB.DB_NAME)#'
-		and   b.property_name = 'Port'
-	</cfquery>
-
-	<!--- Get Listener Port --->
-	<cfquery name="qH" datasource="OTR_SYSMAN">
-		select distinct b.property_value
-		from mgmt_target_properties a, mgmt_target_properties b
-		where a.target_guid = b.target_guid
-		and   a.property_value = '#Trim(qDB.DB_NAME)#'
-		and   b.property_name = 'MachineName'
-	</cfquery>
-
-	<cfquery name="qUpdateDBs" datasource="#Application.datasource#">
-		update OTRREP.OTR_DB 
-		   set DB_HOST = '#qH.property_value#', 
-		       DB_PORT = #qP.property_value#
-		 where DB_NAME = '#Trim(qDB.DB_NAME)#'
-	</cfquery>
-</cfoutput>
-
-<!--- Update OTR_CUST_APPL_TBS from OTR_CUST_APPL_TBS_XT --->
-<cfquery name="qOldTBS" datasource="#Application.datasource#">
-	select CUST_ID, CUST_APPL_ID, DB_NAME, DB_TBS_NAME
-	  from OTR_CUST_APPL_TBS_XT
-	order by DB_NAME, DB_TBS_NAME
-</cfquery>
-
-<cfoutput query="qOldTBS">
-	<cfquery name="qNewTBS" datasource="#Application.datasource#">
-		insert into OTR_CUST_APPL_TBS
-		 (CUST_ID, CUST_APPL_ID, DB_NAME, DB_TBS_NAME)
-		values ('#qOldTBS.CUST_ID#','#qOldTBS.CUST_APPL_ID#','#qOldTBS.DB_NAME#','#qOldTBS.DB_TBS_NAME#')
-	</cfquery>
-</cfoutput>
+<!--- 
+	Long over due Change Log
+	2012.05.20	mst	Delete of commented out code.
 --->
+
 <!--- Pickup Thresholds from Target DB's --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
 	select distinct a.db_name, b.system_password, b.db_host, b.db_port, b.db_rac, b.db_servicename
