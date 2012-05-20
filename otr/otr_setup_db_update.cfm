@@ -24,6 +24,10 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!--- 
+	Long over due Change Log
+	2012.05.20	mst	Fixed the qUpdate Query.
+--->
 <cfquery name="qUpdate" datasource="#Application.datasource#">
    update otr_db
    set db_name = <cfqueryparam value="#FORM.db_name#" cfsqltype="cf_sql_varchar" />,
@@ -85,7 +89,7 @@
 		</cfif>
 		<cfquery name="qUpdate" datasource="#Application.datasource#">
 		   update otr_db
-		   set db_asm = #bASM#,
+		   set db_asm = #bASM#
 		  where UPPER(db_name) = <cfqueryparam value="#UCase(FORM.db_name)#" cfsqltype="cf_sql_varchar" />
 		</cfquery>
 
