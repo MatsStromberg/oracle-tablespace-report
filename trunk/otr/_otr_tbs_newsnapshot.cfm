@@ -34,17 +34,17 @@
 <cfquery name="qDelete" datasource="#Application.datasource#">
 	delete from otr_db_space_rep a
 	where trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
-	  and UPPER(a.db_name) = (select UPPER(b.db_name) where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
+	  and UPPER(a.db_name) = (select UPPER(b.db_name) from otr_db b where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
 </cfquery>
 <cfquery name="qDelete2" datasource="#Application.datasource#">
 	delete from otr_nfs_space_rep a
 	where trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
-	  and UPPER(a.db_name) = (select UPPER(b.db_name) where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
+	  and UPPER(a.db_name) = (select UPPER(b.db_name) from otr_db b where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
 </cfquery>
 <cfquery name="qDelete3" datasource="#Application.datasource#">
 	delete from otr_asm_space_rep a
 	where trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
-	  and UPPER(a.db_name) = (select UPPER(b.db_name) where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
+	  and UPPER(a.db_name) = (select UPPER(b.db_name) from otr_db b where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
 </cfquery>
 <!--- SnapShot Routine --->
 <cfset dRepDate = CreateODBCDateTime(CreateDateTime(Year(Now()),Month(Now()),Day(Now()),Hour(Now()),Minute(Now()),0)) />
