@@ -27,6 +27,7 @@
 <!--- 
 	Long over due Change Log
 	2012.05.20	mst	Fixed the qUpdate Query.
+				mst Added drop of temporary Datasource on a CFCATCH Event.
 --->
 <cfquery name="qUpdate" datasource="#Application.datasource#">
    update otr_db
@@ -96,6 +97,9 @@
 	</cfif>
 	<cfcatch type="Database">
 		<cfset iDBErr = 1>
+		<cfif DataSourceIsValid("#UCase(Trim(FORM.db_name))#temp")>
+			<cfset DataSourceDelete( "#UCase(Trim(FORM.db_name))#temp" ) />
+		</cfif>
 	</cfcatch>
 </cftry>
 <cfif DataSourceIsValid("#UCase(Trim(FORM.db_name))#temp")>
