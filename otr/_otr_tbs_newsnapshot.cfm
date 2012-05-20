@@ -24,40 +24,27 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<!--- Delete any snapshot done TODAY except from Instances in Blackout status --->
+<!--- 
+	Long over due Change Log
+	2012.05.20	mst	Delete snapshot of Instances not in Blackout.
+--->
 <cfset dToday = DateFormat(Now(),'dd.mm.yyyy')>
 <!--- <cfoutput>#dToday#<br />#CGI.HTTP_REFERER#</cfoutput> --->
-<!---
-<cfquery name="qDelete" datasource="#Application.datasource#">
-	delete from otr_db_space_rep a, otr_db b
-	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
-	  and   a.db_name = b.db_name
-	  and   b.db_blackout = 0
-</cfquery>
-<cfquery name="qDelete2" datasource="#Application.datasource#">
-	delete from otr_nfs_space_rep a, otr_db b
-	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
-	  and   a.db_name = b.db_name
-	  and   b.db_blackout = 0
-</cfquery>
-<cfquery name="qDelete3" datasource="#Application.datasource#">
-	delete from otr_asm_space_rep a, otr_db b
-	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
-	  and   a.db_name = b.db_name
-	  and   b.db_blackout = 0
-</cfquery>
---->
+<!--- Delete any snapshot done TODAY except from Instances in Blackout status --->
 <cfquery name="qDelete" datasource="#Application.datasource#">
 	delete from otr_db_space_rep a
-	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	where trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	  and UPPER(a.db_name) = (select UPPER(b.db_name) where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
 </cfquery>
 <cfquery name="qDelete2" datasource="#Application.datasource#">
 	delete from otr_nfs_space_rep a
-	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	where trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	  and UPPER(a.db_name) = (select UPPER(b.db_name) where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
 </cfquery>
 <cfquery name="qDelete3" datasource="#Application.datasource#">
 	delete from otr_asm_space_rep a
-	where   trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	where trunc(a.rep_date) = trunc(to_date('#dToday#','DD-MM-YYYY'))
+	  and UPPER(a.db_name) = (select UPPER(b.db_name) where UPPER(b.db_name) = UPPER(a.db_name) and b.db_blackout = 0 from otr_db)
 </cfquery>
 <!--- SnapShot Routine --->
 <cfset dRepDate = CreateODBCDateTime(CreateDateTime(Year(Now()),Month(Now()),Day(Now()),Hour(Now()),Minute(Now()),0)) />
@@ -142,7 +129,7 @@
 		--->
 
 		<!--- Lookup the Tablespaces to be monitored --->
-		<cfquery name="qTBS" datasource="OTR_OTRREP">
+		<cfquery name="qTBS" datasource="#Application.datasource#">
 			select a.db_name, a.db_tbs_name
 			  from otrrep.otr_cust_appl_tbs a
 			 where exists (select 1 from otrrep.otr_cust_appl_tbs b where b.cust_appl_id=a.cust_appl_id)
@@ -176,7 +163,7 @@
 			</cfquery>
 			<!--- Tablespace Statistics --->
 			<cfif qT.RecordCount IS NOT 0>
-				<cfquery name="qInsert" datasource="OTR_OTRREP">
+				<cfquery name="qInsert" datasource="#Application.datasource#">
 					insert into OTRREP.OTR_DB_SPACE_REP
 						(DB_NAME,REP_DATE,DB_TBS_NAME,DB_TBS_USED_MB,DB_TBS_FREE_MB,DB_TBS_CAN_GROW_MB,DB_TBS_MAX_FREE_MB,DB_TBS_PRC_USED,DB_TBS_REAL_PRC_USED)
 					 values
@@ -252,7 +239,7 @@
 		</cfquery>
 		<cfloop query="qN">
 			<cfif qN.RecordCount IS NOT 0>
-				<cfquery name="qInsert2" datasource="OTR_OTRREP">
+				<cfquery name="qInsert2" datasource="#Application.datasource#">
 					insert into OTRREP.OTR_NFS_SPACE_REP
 						(DB_NAME,REP_DATE,HOSTNAME,NFS_SERVER,FILESYSTEM,MOUNTPOINT,NFS_MB_TOTAL,NFS_MB_USED,NFS_MB_FREE,NFS_PRC_USED)
 					 values
@@ -270,7 +257,7 @@
 			</cfquery>
 			<cfloop query="qA">
 				<cfif qA.RecordCount IS NOT 0>
-					<cfquery name="qInsert3" datasource="OTR_OTRREP">
+					<cfquery name="qInsert3" datasource="#Application.datasource#">
 					insert into OTRREP.OTR_ASM_SPACE_REP
 						(DB_NAME, HOSTNAME, REP_DATE, DG_NAME, ASM_MB_TOTAL, ASM_MB_USED, ASM_MB_FREE, ASM_PRC_USED)
 					 values
