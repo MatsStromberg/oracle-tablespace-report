@@ -24,11 +24,13 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<!--- 
+<!---
 	Long over due Change Log
 	2012.05.16	mst	Now using Active Critical Threshold stored on the Target DB
 	2012.05.18	mst	Changed the check on used % to use GE rather than GT which is
 					what EM is using.
+	2012.05.25	mst	Fixed listing correct error message if the SYSTEM accout
+					is Locked or Expired
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
@@ -230,20 +232,27 @@ function confirmation(txt, url) {
 		</cfif>
 		<cfcatch type="Database">
 			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
-				<cfset DataSourceDelete( "#UCase(qInstances.db_name)#temp" ) />
+				<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
 			</cfif>
 			<cfset iDBErr = 1>
+			<cfset errTT = "Instance is Down or #chr(10)#don't exist anymore" />
+			<cfif #cfcatch.nativeerrorcode# GTE 28000>
+				<cfset iDBErr = cfcatch.nativeerrorcode />
+				<cfset errTT = cfcatch.queryError />
+			</cfif>
 		</cfcatch>
 	</cftry>
 	<cftry>
 		<cfset iRecordCount = qAlarm.RecordCount>
 		<cfcatch type="Any">
 			<cfset iRecordCount = 0 />
+			<cfset iDBErr IS 1 />
 		</cfcatch>
 	</cftry>
 	<tr<cfif qInstances.CurrentRow mod 2> class="alternate"</cfif>>
 		<td>#qInstances.db_name#</td>
-		<td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# % used."<cfelseif iDBErr IS 1> title="Instance is Down or#chr(13)#don't exist anymore"<cfelseif iDBErr IS 4> title="Instance is in#chr(13)#Blackout status"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1 OR iDBErr IS 4>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iDBErr IS 4>Blackout<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS</a><cfelse>&nbsp;</cfif></td>
+		<!--- <td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# % used."<cfelseif iDBErr IS 1> title="Instance is Down or#chr(13)#don't exist anymore"<cfelseif iDBErr IS 4> title="Instance is in#chr(13)#Blackout status"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1 OR iDBErr IS 4>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iDBErr IS 4>Blackout<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS</a><cfelse>&nbsp;</cfif></td> --->
+		<td align="center"<cfif iRecordCount IS NOT 0 AND iDBErr IS 1> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc#% used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"<cfelseif iDBErr IS 4> title="Instance is in#chr(13)#Blackout status"<cfelseif iDBErr GTE 28000> title="#errTT#"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS NOT 0>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iDBErr IS 4>Blackout<cfelseif iDBErr GTE 28000>#iDBErr#<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS</a><cfelse>&nbsp;</cfif></td>
 	</tr>
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
