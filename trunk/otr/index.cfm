@@ -171,7 +171,7 @@ $(document).ready(function() {
 			<td align="right">Include:</td>
 			<td>
 				<input type="checkbox" name="development" value="1" checked class="otrtip" title="<div align='center'>De-select this to explude<br />Development Databases.<br />Environment set to DEV</div>"> Development DB's&nbsp;&nbsp;
-				<input type="checkbox" name="internal" value="1" checked class="otrtip" title="<div align='center'>De-select this to explude<br />Internal Databases.<br />Environment set to INT</div>"> Internal DB's (<span class="otrtip" title="Grid Control 10g/Cloud Control 12c" style="cursor: help; border-bottom: 1px dotted;">Enterprise Manager</span>, <span class="otrtip" title="Oracle Recovery Manager" style="cursor: help; border-bottom: 1px dotted;">RMAN</span> & <span class="otrtip" title="SnapManager for Oracle" style="cursor: help; border-bottom: 1px dotted;">SMO</span> etc.)
+				<input type="checkbox" name="internal" value="1" checked class="otrtip" title="<div align='center'>De-select this to explude<br />Internal Databases.<br />Environment set to INT</div>"> Internal DB's (<span class="otrtip" title="Grid Control 10g/Cloud Control 12c" style="cursor: help; border-bottom: 1px dotted;">Enterprise Manager</span>, <span class="otrtip" title="Oracle Recovery Manager" style="cursor: help; border-bottom: 1px dotted;">RMAN</span> & <span class="otrtip" title="NetApp's SnapManager for Oracle" style="cursor: help; border-bottom: 1px dotted;">SMO</span> etc.)
 			</td>
 		</tr>
 		<tr>
