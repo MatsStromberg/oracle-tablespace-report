@@ -24,6 +24,10 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2012.05.25	mst	Added some more Tool-Tip's
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cftry>
 <cfquery name="qRepDate" datasource="#Application.datasource#">
@@ -142,7 +146,7 @@ $(document).ready(function() {
 		<tr>
 			<td align="right" width="200">Report Date:</td>
 			<td>
-				<select name="rep_date"><cfoutput query="qRepDate">
+				<select name="rep_date" class="otrtip" title="<div align='center'>Select a snapshot date<br />for your report.</div>"><cfoutput query="qRepDate">
 				<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#">#LSDateFormat(qRepDate.rep_date,'medium')#</option>
 				</cfoutput></select>
 			</td>
@@ -153,7 +157,7 @@ $(document).ready(function() {
 		<tr>
 			<td align="right">Customer:</td>
 			<td>
-				<select name="rep_cust">
+				<select name="rep_cust" class="otrtip" title="<div align='center'>Select a specific customer<br />or ALL to list the usage for<br />all your customers.</div>">
 				<option value="">ALL
 				<cfoutput query="qRepClient">
 				<option value="#qRepClient.cust_id#">#qRepClient.cust_name#</option>
@@ -166,8 +170,8 @@ $(document).ready(function() {
 		<tr>
 			<td align="right">Include:</td>
 			<td>
-				<input type="checkbox" name="development" value="1" checked> Development DB's&nbsp;&nbsp;
-				<input type="checkbox" name="internal" value="1" checked> Internal DB's (<span class="otrtip" title="Grid Control 10g/Cloud Control 12c" style="cursor: help; border-bottom: 1px dotted;">Enterprise Manager</span>, <span class="otrtip" title="Oracle Recovery Manager" style="cursor: help; border-bottom: 1px dotted;">RMAN</span> & <span class="otrtip" title="SnapManager for Oracle" style="cursor: help; border-bottom: 1px dotted;">SMO</span> etc.)
+				<input type="checkbox" name="development" value="1" checked class="otrtip" title="<div align='center'>De-select this to explude<br />Development Databases.<br />Environment set to DEV</div>"> Development DB's&nbsp;&nbsp;
+				<input type="checkbox" name="internal" value="1" checked class="otrtip" title="<div align='center'>De-select this to explude<br />Internal Databases.<br />Environment set to INT</div>"> Internal DB's (<span class="otrtip" title="Grid Control 10g/Cloud Control 12c" style="cursor: help; border-bottom: 1px dotted;">Enterprise Manager</span>, <span class="otrtip" title="Oracle Recovery Manager" style="cursor: help; border-bottom: 1px dotted;">RMAN</span> & <span class="otrtip" title="SnapManager for Oracle" style="cursor: help; border-bottom: 1px dotted;">SMO</span> etc.)
 			</td>
 		</tr>
 		<tr>
