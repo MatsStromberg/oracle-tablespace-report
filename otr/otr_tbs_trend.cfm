@@ -16,13 +16,17 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Enterprise
-	Manager 10g or later Repository (Copyright Oracle Inc.)
-	since it will get some of it's data from the EM Repository.
+	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
+	Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
+--->
+<!---
+	Long over due Change Log
+	2012.05.25	mst	Added some more Tool-Tip's
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true" />
 <cfquery name="qInstance" datasource="#Application.datasource#">
@@ -134,7 +138,7 @@ function chartBugLinux(){
 <tr>
 	<td align="right" width="200">Instance:</td>
 	<td width="120">
-		<select name="db_name"><cfoutput query="qInstance">
+		<select name="db_name" class="otrtip" title="<div align='center'>Select an Instance for<br />your Trend report.</div>"><cfoutput query="qInstance">
 		<option value="#Trim(qInstance.db_name)#">#Trim(qInstance.db_name)#</option>
 		</cfoutput></select>
 	</td>
@@ -144,19 +148,19 @@ function chartBugLinux(){
 	</td>
 	<td align="right" width="20">Year:</td>
 	<td width="100">
-		<select name="year" id="year"><cfoutput query="qRepYear">
+		<select name="year" id="year" class="otrtip" title="<div align='center'>Select which year this<br />Trend report should contain.</div>"><cfoutput query="qRepYear">
 		<option value="#qRepYear.rep_year#">#qRepYear.rep_year#</option>
 		</cfoutput></select>
 	</td>
 	<td align="right" width="50">From:</td>
 	<td width="100">
-		<select name="from_date" id="from_date"><cfoutput query="qRepDate">
+		<select name="from_date" id="from_date" class="otrtip" title="<div align='center'>Select starting snapshot date<br />for your report.</div>"><cfoutput query="qRepDate">
 		<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#">#DateFormat(qRepDate.rep_date,"dd.mm.yyyy")#</option>
 		</cfoutput></select>
 	</td>
 	<td align="right" width="50">To:</td>
 	<td width="100">
-		<select name="to_date" id="to_date"><cfoutput query="qRepDate">
+		<select name="to_date" id="to_date" class="otrtip" title="<div align='center'>Select ending snapshot date<br />for your report.</div>"><cfoutput query="qRepDate">
 		<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#"<cfif qRepDate.CurrentRow IS qRepDate.RecordCount> selected</cfif>>#DateFormat(qRepDate.rep_date,"dd.mm.yyyy")#</option>
 		</cfoutput></select>
 	</td>
