@@ -31,6 +31,8 @@
 					what EM is using.
 	2012.05.25	mst	Fixed listing correct error message if the SYSTEM accout
 					is Locked or Expired
+	2012.05.25	mst	Added Can-Grow-To value to the Alarm ToolTip message to give
+					relevance to the Used %
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
