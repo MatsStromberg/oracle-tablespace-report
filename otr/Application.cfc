@@ -24,10 +24,12 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<!--- 
+<!---
 	Long over due Change Log
 	2012.05.20	mst	Application.tablespace.prc_used is not used anymore. 
 					This value is picked up from the Targets Thresholds.
+	2012.05.26	mst	Added setting for the Refresh Time on the Tablespace
+					monitoring pane.
 --->
 <cfcomponent displayname="Application" output="false" hint="Application.cfc for OTR Tablespace Monitoring">
 
@@ -81,6 +83,8 @@
 		<!--- Tablespace Warning Levels --->
 		<!--- <cfset Application.tablespace.prc_used = 98 /> --->
 		<cfset Application.tablespace.mb_left = 1800 />
+		<!--- Tablespace Monitoring Refresh, default 5 minute --->
+		<cfset Application.monitoring_cycle = 5 />
 	</cffunction>
 
 </cfcomponent>
