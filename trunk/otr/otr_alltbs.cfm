@@ -33,6 +33,7 @@
 					is Locked or Expired
 	2012.05.25	mst	Added Can-Grow-To value to the Alarm ToolTip message to give
 					relevance to the Used %
+	2012.05.26	mst	Getting setting for the refresh time from Application.cfc
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
@@ -46,7 +47,7 @@
 <head>
 	<title><cfoutput>#Application.company#</cfoutput> - Oracle Instances</title>
 <cfinclude template="_otr_css.cfm">
-<META HTTP-EQUIV="Refresh" CONTENT="300"> 
+<META HTTP-EQUIV="Refresh" CONTENT="<cfoutput>#Int(Application.monitoring_cycle * 60)#</cfoutput>">
 <cfjavascript minimize="false" munge="false">
 function confirmation(txt, url) {
   if (confirm(txt)) {
