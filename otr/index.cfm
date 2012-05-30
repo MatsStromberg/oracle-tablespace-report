@@ -28,6 +28,7 @@
 	Long over due Change Log
 	2012.05.25	mst	Added some more Tool-Tip's
 	2012.05.26	mst	Getting setting for the refresh time from Application.cfc
+	2012.05.30	mst	Displayed the Refresh time in seconds instead of minutes.
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cftry>
@@ -205,7 +206,7 @@ $(document).ready(function() {
 	<td align="center" width="160" valign="top">
 	<b>Current Status</b><br />
 	<div align="center"><iframe src="otr_currtbs.cfm" name="tbsstatus" id="tbsstatus" width="150" marginwidth="0" marginheight="0" frameborder="0"></iframe></div>
-	Updated every <cfoutput>#Int(Application.monitoring_cycle * 60)#</cfoutput> Minutes<br />
+	Updated every <cfoutput>#Int(Application.monitoring_cycle)#</cfoutput> Minutes<br />
 	For more Info... MouseOver<br />
 	the Status column.<br />
 	<br />
