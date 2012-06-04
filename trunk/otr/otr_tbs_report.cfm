@@ -24,6 +24,10 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2012.05.31	mst	Error when selecting a customer fixed.
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cftry>
 <cfif IsDefined("FORM.development")>
@@ -64,7 +68,7 @@
 	  from otr_db_space_rep a, otr_cust_appl_db_tbs_v b
 	 where UPPER(a.db_name) = UPPER(b.db_name)
 	   and   a.db_tbs_name = b.db_tbs_name
-	<cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">and   UPPER(b.cust_id) = '#TrimUCase((FORM.rep_cust))#'</cfif>
+	<cfif IsDefined("FORM.rep_cust") AND Trim(FORM.rep_cust) GT "">and   UPPER(b.cust_id) = '#Trim(UCase(FORM.rep_cust))#'</cfif>
 	<cfif qDev IS 0>and   b.db_env <> 'DEV'</cfif>
 	<cfif qInt IS 0>and   b.db_env <> 'INT'</cfif>
 	   and   trunc(a.rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
