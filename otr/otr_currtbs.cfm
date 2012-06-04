@@ -34,14 +34,47 @@
 	2012.05.25	mst	Added Can-Grow-To value to the Alarm ToolTip message to give
 					relevance to the Used %
 	2012.05.26	mst	Getting setting for the refresh time from Application.cfc
+	2012.06.04	mst	Handling of scan-address connection from time to time 
+					returning ORA-17002 (Down)	Opened an SR at Oracle regarding 
+					ojdbc6.jar. Temporary workaround... ignore 17002
+	2012.06.04	mst	Fixing error message if the OTR Instance is down.
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
-
-<cfquery name="qInstances" datasource="#Application.datasource#">
-	select db_name, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
-	  from otr_db
-	 order by db_name
-</cfquery>
+<cftry>
+	<cfquery name="qInstances" datasource="#Application.datasource#">
+		select db_name, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
+		  from otr_db
+		 order by db_name
+	</cfquery>
+	<cfcatch type="Database">
+		<html>
+		<head>
+		<title><cfoutput>#Application.company#</cfoutput> - Oracle Instances</title>
+		<cfinclude template="_otr_css.cfm">
+		<META HTTP-EQUIV="Refresh" CONTENT="<cfoutput>#Int(Application.monitoring_cycle * 60)#</cfoutput>">
+		</head>
+		<body>
+		<div align="center">
+		<table border="0" cellpadding="5">
+		<tr>
+			<td class="bodyline">
+			<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td width="100" style="font-size: 9pt;font-weight: bold;">SID</td>
+				<td align="center" width="40" style="font-size: 9pt;font-weight: bold;">Status</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					OTR Repo<br />
+					is DOWN!!!
+				</td>
+			</tr>
+			</table>
+		</tr>
+		</table>
+		<cfabort>
+	</cfcatch>
+</cftry>
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
@@ -237,9 +270,18 @@ function confirmation(txt, url) {
 			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 				<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
 			</cfif>
-			<cfset iDBErr = 1>
+			<cfset iDBErr = 1 />
 			<cfset errTT = "Instance is Down or #chr(10)#don't exist anymore" />
-			<cfif #cfcatch.nativeerrorcode# GTE 28000>
+			<cfif IsDefined('cfcatch.nativeerrorcode')>
+				<cfset errTT = errTT & "" & "#chr(10)##cfcatch.nativeerrorcode#" />
+			</cfif>
+			<cfif IsDefined('cfcatch.nativeerrorcode') AND cfcatch.nativeerrorcode IS 17002>
+				<cfset bDummy = Logger(cfcatch.nativeerrorcode, 'warning') />
+				<!--- Teporary fix due to SCAN issue --->
+				<cfset iDBErr = 0 />
+				<cfset errTT = cfcatch.queryError & "" & "#chr(10)##cfcatch.nativeerrorcode#" />
+			</cfif>
+			<cfif IsDefined("cfcatch.nativeerrorcode") AND #cfcatch.nativeerrorcode# GTE 28000>
 				<cfset iDBErr = cfcatch.nativeerrorcode />
 				<cfset errTT = cfcatch.queryError />
 			</cfif>
@@ -255,8 +297,8 @@ function confirmation(txt, url) {
 	<cfif iRecordCount IS NOT 0 OR iDBErr IS 1 OR iDBErr IS 4 OR iDBErr GTE 28000>
 	<tr<cfif qInstances.CurrentRow mod 2> class="alternate"</cfif>>
 		<td>#qInstances.db_name#</td>
-		<!--- ><td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS<cfelse>&nbsp;</cfif></td> --->
-		<td align="center"<cfif iRecordCount IS NOT 0 AND iDBErr IS 1> title="#qAlarm.tablespace_name##chr(13)#Can Grow To:#qAlarm.can_grow_to# MB#chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc#% used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"<cfelseif iDBErr IS 4> title="Instance is in#chr(13)#Blackout status"<cfelseif iDBErr GTE 28000> title="#errTT#"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS NOT 0>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iDBErr IS 4>Blackout<cfelseif iDBErr GTE 28000>#iDBErr#<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS</a><cfelse>&nbsp;</cfif></td>
+		<!--- <td align="center"<cfif iRecordCount IS NOT 0> title="#qAlarm.tablespace_name##chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc# used."<cfelseif iDBErr IS 1> title="Instance is Down or #chr(13)#don't exist anymore"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS 1>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS<cfelse>&nbsp;</cfif></td> --->
+		<td align="center"<cfif iRecordCount IS NOT 0 AND iDBErr IS 1> title="#qAlarm.tablespace_name##chr(13)#Can Grow To:#qAlarm.can_grow_to# MB#chr(13)##qAlarm.max_mb_free# MB Free, #qAlarm.prc#% used."<cfelseif iDBErr IS 1> title="#errTT#"<cfelseif iDBErr IS 4> title="Instance is in#chr(13)#Blackout status"<cfelseif iDBErr GTE 28000> title="#errTT#"</cfif> style="<cfif iRecordCount IS NOT 0 OR iDBErr IS NOT 0>background-color: red; cursor: help;<cfelse>background-color: green;</cfif>"><cfif iDBErr IS 1>Down<cfelseif iDBErr IS 4>Blackout<cfelseif iDBErr GTE 28000>#iDBErr#<cfelseif iRecordCount GT 0><a href="otr_tbs_fix.cfm?SID=#qInstances.db_name#&TBS=#qAlarm.tablespace_name#" target="_parent" style="color: 000;">TBS</a><cfelse>&nbsp;</cfif></td>
 	</tr></cfif>
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
