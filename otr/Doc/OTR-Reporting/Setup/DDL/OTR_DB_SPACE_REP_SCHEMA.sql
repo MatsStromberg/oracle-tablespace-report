@@ -90,5 +90,5 @@ grant select on sys.v_$instance to otrrep;
 grant select on sys.v_$session to otrrep;
 grant select on sys.v_$thread to otrrep;
 
-alter user otrrep identified by otrrep4otr;
+-- alter user otrrep identified by otrrep4otr;
 
