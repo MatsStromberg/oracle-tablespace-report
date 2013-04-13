@@ -1,21 +1,5 @@
 ACCEPT P_OTRDB DEFAULT 'OTR' CHAR Prompt "Enter Database Alias for the OTR Repository [OTR]: "
--- ACCEPT P_SYS_Password CHAR Prompt "Enter Password for user SYS: " HIDE
 ACCEPT P_OTRREP_Password CHAR Prompt "Enter Password for user OTRREP: " HIDE
--- Prompt "Path for the External table must be LOCALLY on the OTR DB Server (no UNC path allowed!)"
--- ACCEPT P_XTFILE DEFAULT '/orascripts/scripts/monitoring/xt/OTR' CHAR Prompt "Enter path for the External Table [/orascripts/scripts/monitoring/xt/OTR]: "
--- ACCEPT P_SQLNET_DOMAIN DEFAULT 'MBCZH.CH' CHAR Prompt "Enter SQLNET.DEFAULT_DOMAIN [MBCZH.CH]: "
-
--- PROMPT Connecting as SYS AS SYSDBA on OGC2ICB database, please enter SYS password and press ENTER
--- connect SYS/&P_SYS_Password@&P_OTRDB AS SYSDBA
-
--- PROMPT Creating DIRECTORY 'OTR_REP_DATA_DIR'
--- REM NOTICE: Must be LOCALLY on the OTR Repository DB Server (no UNC path allowed)!
--- REM         Can ofcourse be an NFS mountpoint!
--- create directory OTR_REP_DATA_DIR as '&P_XTFILE'
--- /
-
--- GRANT ALL ON DIRECTORY OTR_REP_DATA_DIR TO OTRREP
--- /
 
 PROMPT Connecting as OTRREP on &P_OTRDB database
 connect OTRREP/&P_OTRREP_Password@&P_OTRDB
@@ -54,7 +38,7 @@ COMMENT ON COLUMN OTRREP.OTR_DB.DB_RAC IS 'RAC = 1, NO RAC = 0'
 /
 COMMENT ON COLUMN OTRREP.OTR_DB.DB_SERVICENAME IS 'Service Name is required for RAC!'
 /
-COMMENT ON COLUMN OTRREP.OTR_DB.DB_RAC IS 'BLACKOUT = 1, ONLINE = 0'
+COMMENT ON COLUMN OTRREP.OTR_DB.DB_BLACKOUT IS 'BLACKOUT = 1, ONLINE = 0'
 /
 
 
@@ -97,21 +81,6 @@ COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.THRESHOLD_WARNING IS 'Warning thresho
 COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.THRESHOLD_CRITICAL IS 'Critical threshold value'
 /
 
-
--- PROMPT Creating Table 'OTR_CUST_APPL_TBS_XT' - EXTERNALLY IDENTIFIED (MAINTAINED BY XLS)!
--- create table OTR_CUST_APPL_TBS_XT
---  (CUST_ID           VARCHAR2(20)
---  ,CUST_APPL_ID      VARCHAR2(30)
---  ,DB_NAME           VARCHAR2(20)
---  ,DB_TBS_NAME       VARCHAR2(30)
---  )
---  organization external  
---  (type oracle_loader  
---   default directory OTR_REP_DATA_DIR
---   access parameters (records delimited by newline 
---                      fields terminated by ';') 
---   location ('OTR_CUST_APPL_TBS_XT.DAT'))
--- /
 
 PROMPT Creating Table 'OTR_DB_SPACE_REP'
 CREATE TABLE OTR_DB_SPACE_REP
@@ -156,6 +125,48 @@ CREATE TABLE OTR_ASM_SPACE_REP
  ,ASM_PRC_USED         NUMBER(20,6)  NOT NULL -- ASM Available Space (in Procent) computed
  )
  TABLESPACE OTR_REP_DATA
+/
+
+PROMPT Creating Table 'OTR_TBS_ALERTS'
+create table OTR_TBS_ALERTS
+ (REP_DATE             DATE          NOT NULL
+ ,MSG_TYPE             NUMBER(6)     DEFAULT 0
+ ,DB_NAME              VARCHAR2(20)  NOT NULL
+ ,DB_TBS_NAME          VARCHAR2(30)
+ ,DB_ERR               NUMBER(6)     DEFAULT 0
+ ,MB_USED              NUMBER(20,6)
+ ,MB_FREE              NUMBER(20,6)
+ ,CAN_GROW_TO          NUMBER(20,6)
+ ,MAX_MB_FREE          NUMBER(20,6)
+ ,PRC_USED             NUMBER(6,2)
+ ,PRC                  NUMBER(6,2)
+  )
+ TABLESPACE OTR_REP_DATA
+/
+
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.REP_DATE IS 'SYSDATE'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.MSG_TYPE IS 'Error Type 0 = OK, 1 = TBS, 2 = DOWN, 3 = LOCKED'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.DB_NAME IS 'Database Name (SID)'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.DB_TBS_NAME IS 'Tablespace Name'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.DB_ERR IS 'Error Code'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.MB_USED IS 'Tablespace USED bytes (in MB)'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.MB_USED IS 'Tablespace FREE bytes (in MB) computed'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.MB_FREE IS 'Tablespace FREE bytes (in MB) computed'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.CAN_GROW_TO IS 'Tablespace Can Grow to bytes (in MB) computed'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.MAX_MB_FREE IS 'Tablespace MAX FREE bytes (in MB) computed'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.PRC_USED IS 'Tablespace Used (in Procent) computed'
+/
+COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.PRC IS 'Tablespace with autoextent Used (in Procent) computed'
 /
 
 
