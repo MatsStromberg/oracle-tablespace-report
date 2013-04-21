@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,6 +24,10 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.21	mst	Handeling snapshot_day = 0
+--->
 <cfsetting enablecfoutputonly="true" />
 <cfquery name="qRepDateMax" datasource="#application.datasource#">
 	select rep_date 
@@ -46,6 +50,6 @@
 </tr>
 </table>
 <div id="loaderDiv" class="hideMe">&nbsp;</div>
-<div id="halgeDiv" class="hideMe">&nbsp;<div align="center" class="halgeHeading">No manually generated Snapshots on <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>! <div id="countDown"></div></div></div>
+<div id="halgeDiv" class="hideMe">&nbsp;<div align="center" class="halgeHeading"><cfif Application.snapshot_day IS NOT 0>No manually generated Snapshots on <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>!</cfif> <div id="countDown"></div></div></div>
 <iframe frameborder="0" name="snapshot" id="snapshot" src="" width="0" height="0" scrolling="NO"></iframe>
 <br />
