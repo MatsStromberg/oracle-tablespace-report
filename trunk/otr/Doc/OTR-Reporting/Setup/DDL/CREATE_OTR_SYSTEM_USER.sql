@@ -45,7 +45,7 @@ begin
 end;
 begin
   if upper('&&user_tablespace') = 'SYSAUX' then
-    raise_application_error(-20101, 'Install failed - SYSTEM tablespace specified for TEMPORARY tablespace');
+    raise_application_error(-20101, 'Install failed - SYSAUX tablespace specified for TEMPORARY tablespace');
   end if;
 end;
 /
@@ -87,7 +87,7 @@ begin
 end;
 begin
   if upper('&&user_tablespace') = 'SYSAUX' then
-    raise_application_error(-20101, 'Install failed - SYSTEM tablespace specified for TEMPORARY tablespace');
+    raise_application_error(-20101, 'Install failed - SYSAUX tablespace specified for TEMPORARY tablespace');
   end if;
 end;
 /
