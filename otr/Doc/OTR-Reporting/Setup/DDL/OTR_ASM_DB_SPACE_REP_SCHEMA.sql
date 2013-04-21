@@ -1,4 +1,5 @@
 whenever sqlerror exit rollback
+set verify off
 ACCEPT P_OTRDB DEFAULT 'OTR' CHAR Prompt "Enter Database Alias for the OTR Repository [OTR]: "
 ACCEPT P_SYS_Password CHAR Prompt "Enter Password for user SYS: " HIDE
 ACCEPT P_DATFILE DEFAULT '+DATA_DG' CHAR Prompt "Enter path for the otr_rep_data [+DATA_DG]: "
@@ -55,6 +56,12 @@ set heading on
 begin
   if upper('&&temporary_tablespace') = 'SYSTEM' then
     raise_application_error(-20101, 'Install failed - SYSTEM tablespace specified for TEMPORARY tablespace');
+  end if;
+end;
+/
+begin
+  if upper('&&temporary_tablespace') = 'SYSAUX' then
+    raise_application_error(-20101, 'Install failed - SYSAUX tablespace specified for TEMPORARY tablespace');
   end if;
 end;
 /
