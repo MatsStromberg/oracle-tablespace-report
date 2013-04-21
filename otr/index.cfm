@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -29,8 +29,11 @@
 	2012.05.25	mst	Added some more Tool-Tip's
 	2012.05.26	mst	Getting setting for the refresh time from Application.cfc
 	2012.05.30	mst	Displayed the Refresh time in seconds instead of minutes.
+	2012.06.14	mst	Changed tipTip position to Above for Input type SELECT.
+	2013.04.17	mst	Changed check to see if this is a new Install or not
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
+<!--- Is the Datasource there and is the OTRREP Schema there? --->
 <cftry>
 <cfquery name="qRepDate" datasource="#Application.datasource#">
 	select rep_date 
@@ -38,12 +41,29 @@
 	order by rep_date desc
 </cfquery>
 	<cfcatch type="Database">
-		<!--- Either the datasource is missing or we have not configured
-		      any OTR Repository yet. --->
-		<cflocation url="/bluedragon/administrator/index.cfm" addtoken="No" />
+		<cfif variables.cfcatch.detail IS "The datasource OTR_OTRREP could not be found or was invalid">
+			<!--- Either the datasource is missing or we have not configured
+				  any OTR Repository yet. --->
+			<cflocation url="/bluedragon/administrator/index.cfm" addtoken="No" />
+		</cfif>
+		<cfif variables.cfcatch.detail IS "Database reported: ORA-00942: table or view does not exist">
+			<!--- No Repositorya is created yet. Running Repo Setup --->
+			<cflocation url="/otr/otr_setup_new_db.cfm" addtoken="No" />
+		</cfif>
 	</cfcatch>
 </cftry>
-
+<!--- Do we have to upgrade the OTR Repository to Releas 2.1 ? --->
+<cftry>
+<cfquery name="qOTR_Update" datasource="#Application.datasource#">
+	select db_name from OTR_TBS_ALERTS
+	 where db_name = 'NOTBS'
+	 order by rep_date, msg_type, db_name, db_tbs_name
+</cfquery>
+	<cfcatch type="Database">
+			<!--- Yes this is an old OTR. Running Repo Upgrade --->
+			<cflocation url="/otr/otr_setup_upgrade_db.cfm" addtoken="No" />
+	</cfcatch>
+</cftry>
 <cfquery name="qRepClient" datasource="#Application.datasource#">
 	select cust_id, cust_name 
 	  from otr_cust 
@@ -54,7 +74,7 @@
 	select db_name
 	from otr_db
 </cfquery>
-<!--- New Setup? If so, we'll do some basic Database updates. --->
+<!--- New Setup? If so, we have to load some basic Data. --->
 <cfif qDBInstances.RecordCount IS 0>
 	<cflocation url="/otr/otr_setup.cfm" addtoken="no" />
 </cfif>
@@ -148,7 +168,7 @@ $(document).ready(function() {
 		<tr>
 			<td align="right" width="200">Report Date:</td>
 			<td>
-				<select name="rep_date" class="otrtip" title="<div align='center'>Select a snapshot date<br />for your report.</div>"><cfoutput query="qRepDate">
+				<select name="rep_date" class="otrtip_u" title="<div align='center'>Select a snapshot date<br />for your report.</div>"><cfoutput query="qRepDate">
 				<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#">#LSDateFormat(qRepDate.rep_date,'medium')#</option>
 				</cfoutput></select>
 			</td>
@@ -159,7 +179,7 @@ $(document).ready(function() {
 		<tr>
 			<td align="right">Customer:</td>
 			<td>
-				<select name="rep_cust" class="otrtip" title="<div align='center'>Select a specific customer<br />or ALL to list the usage for<br />all your customers.</div>">
+				<select name="rep_cust" class="otrtip_u" title="<div align='center'>Select a specific customer<br />or ALL to list the usage for<br />all your customers.</div>">
 				<option value="">ALL
 				<cfoutput query="qRepClient">
 				<option value="#qRepClient.cust_id#">#qRepClient.cust_name#</option>
