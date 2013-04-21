@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,7 +16,7 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
+	The Oracle Tablespace Report do need an Oracle EM 10g/12cR1 or R2 Repository
 	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
 	Repository.
     
@@ -28,6 +28,10 @@
 	Long over due Change Log
 	2012.05.20	mst	Delete snapshot of Instances not in Blackout.
 	2012.05.23	mst	Fixed the delete statement that was messed up!!!
+	2012.08.14	mst	Added parameters to the jdbc connect string.
+	2013.04.17	mst	Re-written the NFS Lookup.  OTRREP does not have 
+					to be in the same Instance as the EM Repositorys!!!
+	2013.04.18	mst	Added SYSTEM Username from the Target DB
 --->
 <cfset dToday = DateFormat(Now(),'dd-mm-yyyy')>
 <!--- <cfoutput>#dToday#<br />#CGI.HTTP_REFERER#</cfoutput> --->
@@ -98,9 +102,13 @@
 			</cfif>
 			<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 			<cfset s.databasename = "#UCase(qInstances.db_name)#" />
-			<cfset s.username     = "system" />
+			<cfset s.username     = "#UCase(qInstances.system_username)#" />
 			<cfset s.password     = "#sPassword#" />
 			<cfset s.port         = "#iPort#" />
+			<cfset s.logintimeout = "5" />
+			<cfset s.connectiontimeout = "5" />
+			<cfset s.connectionretries = "2" />
+			<cfset s.maxconnections	= "20" />
 
 			<!--- If Temporary Datasource exists... Delete it --->
 			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
@@ -161,71 +169,67 @@
 					</cfquery>
 				</cfif>
 			</cfloop>
+
 			<!--- NFS Statistics --->
 			<cfquery name="qN" datasource="OTR_SYSMAN">
-			   SELECT DISTINCT io.db_name, n.target_name hostname, n.nfs_server,
-			                   n.filesystem, n.mountpoint mountpoint,
-			                   ROUND (n.sizeb / 1024 / 1024, 2) mb_total,
-			                   ROUND (n.usedb / 1024 / 1024, 2) mb_used,
-			                   ROUND (n.freeb / 1024 / 1024, 2) mb_free,
-			                   ROUND ((n.usedb / n.sizeb) * 100) prc_used
-			              FROM otrrep.otr_db io,
-			                   sysman.mgmt$storage_report_nfs n,
-			                   sysman.mgmt$target t,
-			                   sysman.mgmt$target s
-			             WHERE n.target_guid = t.target_guid
-			               AND UPPER(io.db_name) = '#UCase(qInstances.db_name)#'
-			               AND n.mountpoint =
-			                      (SELECT DISTINCT ma.os_storage_entity
-			                                  FROM sysman.mgmt$db_datafiles_all ma,
-			                                       sysman.mgmt$storage_report_nfs NO
-			                                 WHERE ma.os_storage_entity = NO.mountpoint
-			                                   AND REPLACE(UPPER(ma.target_name),
-			                                                '.#UCase(Application.oracle.domain_name)#',
-			                                                ''
-			                                               ) =
-								       UPPER(io.db_name)
-			                                   AND NO.mountpoint <> '/')
-			               AND s.host_name = t.host_name
-			               AND n.target_name =
-			                      (SELECT DISTINCT mh.host_name
-			                                  FROM sysman.mgmt$db_datafiles_all mh
-			                                 WHERE REPLACE(UPPER(mh.target_name),
-			                                                '.#UCase(Application.oracle.domain_name)#',
-			                                                ''
-			                                               ) = UPPER(io.db_name))
-			   UNION
-			   SELECT DISTINCT io.db_name, NO.target_name hostname, NO.nfs_server,
-			                   NO.filesystem, NO.mountpoint mountpoint,
-			                   ROUND (NO.sizeb / 1024 / 1024, 2) mb_total,
-			                   ROUND (NO.usedb / 1024 / 1024, 2) mb_used,
-			                   ROUND (NO.freeb / 1024 / 1024, 2) mb_free,
-			                   ROUND ((NO.usedb / NO.sizeb) * 100) prc_used
-			              FROM otrrep.otr_db io,
-			                   sysman.mgmt$storage_report_nfs NO,
-			                   sysman.mgmt$target ot,
-			                   sysman.mgmt$target so
-			             WHERE ot.target_guid = NO.target_guid
-			               AND UPPER(io.db_name) = '#UCase(qInstances.db_name)#'
-			               AND UPPER(so.target_name) LIKE UPPER(io.db_name) || '%'
-			               AND NO.mountpoint =
-			                      (SELECT DISTINCT ma.os_storage_entity
-			                                  FROM sysman.mgmt$db_redologs_all ma,
-			                                       sysman.mgmt$storage_report_nfs NO
-			                                 WHERE ma.os_storage_entity = NO.mountpoint
-			                                   AND REPLACE(UPPER(ma.target_name),
-			                                                '.#UCase(Application.oracle.domain_name)#',
-			                                                ''
-			                                               ) = UPPER(io.db_name)
-			                                   AND NO.mountpoint <> '/')
-			               AND so.host_name = ot.host_name
-			               AND NO.target_name =
-			                      (SELECT DISTINCT mh.host_name
-			                                  FROM sysman.mgmt$db_redologs_all mh
-			                                 WHERE REPLACE(UPPER(mh.target_name),
-			                                                '.#UCase(Application.oracle.domain_name)#',
-			                                                ''
-			                                               ) = UPPER(io.db_name));
+				SELECT DISTINCT '#Trim(qInstances.db_name)#' db_name, n.target_name hostname, n.nfs_server,
+								n.filesystem, n.mountpoint mountpoint,
+								ROUND (n.sizeb / 1024 / 1024, 2) mb_total,
+								ROUND (n.usedb / 1024 / 1024, 2) mb_used,
+								ROUND (n.freeb / 1024 / 1024, 2) mb_free,
+								ROUND ((n.usedb / n.sizeb) * 100) prc_used
+						   FROM sysman.mgmt$storage_report_nfs n,
+								sysman.mgmt$target t,
+								sysman.mgmt$target s
+						  WHERE n.target_guid = t.target_guid
+							AND n.mountpoint =
+								(SELECT DISTINCT ma.os_storage_entity
+											FROM sysman.mgmt$db_datafiles_all ma,
+												 sysman.mgmt$storage_report_nfs NO
+										   WHERE ma.os_storage_entity = NO.mountpoint
+											 AND REPLACE(UPPER(ma.target_name),
+														'.#UCase(Application.oracle.domain_name)#',
+														''
+														) = UPPER('#Trim(qInstances.db_name)#')
+											 AND NO.mountpoint <> '/')
+							AND s.host_name = t.host_name
+							AND n.target_name =
+								(SELECT DISTINCT mh.host_name
+								   FROM sysman.mgmt$db_datafiles_all mh
+								  WHERE REPLACE(UPPER(mh.target_name),
+													'.#UCase(Application.oracle.domain_name)#',
+													''
+												) = UPPER('#Trim(qInstances.db_name)#'))
+				UNION
+				SELECT DISTINCT '#Trim(qInstances.db_name)#' db_name, NO.target_name hostname, NO.nfs_server,
+								NO.filesystem, NO.mountpoint mountpoint,
+								ROUND (NO.sizeb / 1024 / 1024, 2) mb_total,
+								ROUND (NO.usedb / 1024 / 1024, 2) mb_used,
+								ROUND (NO.freeb / 1024 / 1024, 2) mb_free,
+								ROUND ((NO.usedb / NO.sizeb) * 100) prc_used
+						   FROM sysman.mgmt$storage_report_nfs NO,
+								sysman.mgmt$target ot,
+								sysman.mgmt$target so
+						  WHERE ot.target_guid = NO.target_guid
+							AND UPPER(so.target_name) LIKE UPPER('#Trim(qInstances.db_name)#') || '%'
+							AND NO.mountpoint =
+								(SELECT DISTINCT ma.os_storage_entity
+								   FROM sysman.mgmt$db_redologs_all ma,
+										sysman.mgmt$storage_report_nfs NO
+								  WHERE ma.os_storage_entity = NO.mountpoint
+									AND REPLACE(UPPER(ma.target_name),
+													'.#UCase(Application.oracle.domain_name)#',
+													''
+												) = UPPER('#Trim(qInstances.db_name)#')
+									AND NO.mountpoint <> '/')
+							AND so.host_name = ot.host_name
+							AND NO.target_name =
+								(SELECT DISTINCT mh.host_name
+								   FROM sysman.mgmt$db_redologs_all mh
+								  WHERE REPLACE(UPPER(mh.target_name),
+													'.#UCase(Application.oracle.domain_name)#',
+													''
+												) = UPPER('#Trim(qInstances.db_name)#'))
 			</cfquery>
 			<cfloop query="qN">
 				<cfif qN.RecordCount IS NOT 0>
@@ -237,6 +241,7 @@
 					</cfquery>
 				</cfif>
 			</cfloop>
+
 			<!--- ASM Statistics --->
 			<cfif bASM IS 1>
 				<cfquery name="qA" datasource="#UCase(qInstances.db_name)#temp">
