@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -30,6 +30,9 @@
 					This value is picked up from the Targets Thresholds.
 	2012.05.26	mst	Added setting for the Refresh Time on the Tablespace
 					monitoring pane.
+	2012.06.15	mst	Added QueryToStruct Function... Preparing for 
+					Tablespace Monitoring as a WebService.
+	2013.04.17	mst	Added parameter for default SYSTEM Username.
 --->
 <cfcomponent displayname="Application" output="false" hint="Application.cfc for OTR Tablespace Monitoring">
 
@@ -38,13 +41,15 @@
 	<cffunction name="onApplicationStart">
 		<cfscript>
 			Application.pw_hash = CreateObject("component", "otr.pw_hash");
+			Application.Query2Struct = CreateObject("component", "otr.query2struct");
 		</cfscript>
 		<!--- SQLNET.DEFAULT_DOMAIN for DB-Links --->
 		<cfset Application.oracle.domain_name = "MYDOMAIN.CH" />
 		<!--- Datasource Settings --->
 		<cfset Application.datasource = "OTR_OTRREP" />
-		<cfset Application.dbusername = "OTRREP" />
-		<cfset Application.dbpassword = "otrrep4otr" />
+		<cfset Application.dbusername = "OTRREP" />		<!--- Parameter not used anymore --->
+		<cfset Application.dbpassword = "otrrep4otr" />	<!--- Parameter not used anymore --->
+		<cfset Application.default_system_username = "SYSTEM" />
 		<!--- MailServer Settings --->
 		<cfset Application.mailserver = "" />
 		<cfset Application.mailport = "25" />
@@ -73,7 +78,7 @@
 		<cfset Application.obd_desktop_host = "http://localhost:8080/" />
 		<cfset Application.logo_image = "OTR_logo.gif" />
 		<cfset Application.ogc_logon_url = "https://minerva:7799/em/" />
-		<cfset Application.ogc_external_table = "/orascripts/scripts/monitoring/xt/OTR" />
+		<!--- <cfset Application.ogc_external_table = "/orascripts/scripts/monitoring/xt/OTR" /> --->
 		<cfset Application.host_instance_pdf_dir = "/opt/OpenBD/tbsreports/" />
 		<!--- Set Locale --->
 		<cfset Application.locale_string = "German (Switzerland)" />
