@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -23,6 +23,10 @@
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
+--->
+<!---
+	Long over due Change Log
+	2013.04.25	mst	Updated Copyright note
 --->
 <cfquery name="qInsert" datasource="#application.datasource#">
 insert into otr_cust
