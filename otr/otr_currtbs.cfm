@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -38,18 +38,23 @@
 					returning ORA-17002 (Down)	Opened an SR at Oracle regarding 
 					ojdbc6.jar. Temporary workaround... ignore 17002
 	2012.06.04	mst	Fixing error message if the OTR Instance is down.
+	2012.08.15	mst	Added parameters to the jdbc connect string.
+	2013.04.17	mst	Added SYSTEM Username
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
+
 <cftry>
 	<cfquery name="qInstances" datasource="#Application.datasource#">
-		select db_name, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
+		select db_name, system_username, system_password, db_host, db_port, db_rac, db_servicename, db_blackout
 		  from otr_db
 		 order by db_name
 	</cfquery>
 	<cfcatch type="Database">
 		<html>
 		<head>
-		<title><cfoutput>#Application.company#</cfoutput> - Oracle Instances</title>
+		<title><cfoutput>#Application.company#</cfoutput> - OTR Repository is Down!!!</title>
 		<cfinclude template="_otr_css.cfm">
 		<META HTTP-EQUIV="Refresh" CONTENT="<cfoutput>#Int(Application.monitoring_cycle * 60)#</cfoutput>">
 		</head>
@@ -60,8 +65,8 @@
 			<td class="bodyline">
 			<table border="0" cellpadding="0" cellspacing="0">
 			<tr>
-				<td width="100" style="font-size: 9pt;font-weight: bold;">SID</td>
-				<td align="center" width="40" style="font-size: 9pt;font-weight: bold;">Status</td>
+				<td width="100" class="tbs_status_head">SID</td>
+				<td align="center" width="40" class="tbs_status_head">Status</td>
 			</tr>
 			<tr>
 				<td colspan="2">
@@ -78,7 +83,7 @@
 <cfsetting enablecfoutputonly="false">
 <html>
 <head>
-	<title><cfoutput>#Application.company#</cfoutput> - Oracle Instances</title>
+	<title><cfoutput>#Application.company#</cfoutput> - Oracle Tablespace Status</title>
 <cfinclude template="_otr_css.cfm">
 <META HTTP-EQUIV="Refresh" CONTENT="<cfoutput>#Int(Application.monitoring_cycle * 60)#</cfoutput>">
 <cfjavascript minimize="false" munge="false">
@@ -89,7 +94,6 @@ function confirmation(txt, url) {
 }
 </cfjavascript>
 </head>
-
 <body>
 <div align="center">
 <table border="0" cellpadding="5">
@@ -97,8 +101,8 @@ function confirmation(txt, url) {
 	<td class="bodyline">
 	<table border="0" cellpadding="0" cellspacing="0">
 	<tr>
-		<td width="100" style="font-size: 9pt;font-weight: bold;">SID</td>
-		<td align="center" width="40" style="font-size: 9pt;font-weight: bold;">Status</td>
+		<td width="100" class="tbs_status_head">SID</td>
+		<td align="center" width="40" class="tbs_status_head">Status</td>
 	</tr>
 	<cfoutput query="qInstances">
 	<cfset iDBErr = 0 />
@@ -135,7 +139,7 @@ function confirmation(txt, url) {
 		</cfif>
 
 		<!--- Decrypt the SYSTEM Password --->
-		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
+		<cfset sPassword = Application.pw_hash.decryptOraPW(Trim(qInstances.system_password), Trim(sHashKey)) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
 		<cfif qInstances.db_rac IS 1>
@@ -144,10 +148,20 @@ function confirmation(txt, url) {
 			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(sHost)#:#iPort#:#UCase(qInstances.db_name)#" />
 		</cfif>
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
+		<cfif qInstances.db_rac IS 1>
+		<cfset s.databasename = "#UCase(qInstances.db_servicename)#" />
+		<cfelse>
 		<cfset s.databasename = "#UCase(qInstances.db_name)#" />
-		<cfset s.username     = "system" />
+		</cfif>
+		<cfset s.username     = "#UCase(qInstances.system_username)#" />
 		<cfset s.password     = "#sPassword#" />
 		<cfset s.port         = "#iPort#" />
+		<cfif qInstances.db_rac IS 1>
+ 			<cfset s.logintimeout = "5" />
+ 			<cfset s.connectiontimeout = "5" />
+ 			<cfset s.connectionretries = "2" />
+ 			<cfset s.maxconnections = "20" />
+		</cfif>
 
 		<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
@@ -270,25 +284,26 @@ function confirmation(txt, url) {
 			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 				<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
 			</cfif>
-			<cfset iDBErr = 1 />
-			<cfset errTT = "Instance is Down or #chr(10)#don't exist anymore" />
-			<cfif IsDefined('cfcatch.nativeerrorcode')>
-				<cfset errTT = errTT & "" & "#chr(10)##cfcatch.nativeerrorcode#" />
-			</cfif>
-			<cfif IsDefined('cfcatch.nativeerrorcode') AND cfcatch.nativeerrorcode IS 17002>
-				<cfset bDummy = Logger(cfcatch.nativeerrorcode, 'warning') />
-				<!--- Teporary fix due to SCAN issue --->
-				<cfset iDBErr = 0 />
-				<cfset errTT = cfcatch.queryError & "" & "#chr(10)##cfcatch.nativeerrorcode#" />
-			</cfif>
-			<cfif IsDefined("cfcatch.nativeerrorcode") AND #cfcatch.nativeerrorcode# GTE 28000>
-				<cfset iDBErr = cfcatch.nativeerrorcode />
-				<cfset errTT = cfcatch.queryError />
+			<cfif iDBErr IS NOT 4>
+				<cfset iDBErr = 1 />
+				<cfset errTT = "Instance is Down or #chr(10)#don't exist anymore" />
+				<cfif IsDefined('cfcatch.nativeerrorcode')>
+					<cfset errTT = errTT & "" & "#chr(10)##cfcatch.nativeerrorcode#" />
+				</cfif>
+				<cfif IsDefined('cfcatch.nativeerrorcode') AND cfcatch.nativeerrorcode IS 17002>
+					<!--- Teporary fix due to SCAN issue --->
+					<cfset iDBErr = 0 />
+					<cfset errTT = cfcatch.queryError & "" & "#chr(10)##cfcatch.nativeerrorcode#" />
+				</cfif>
+				<cfif IsDefined("cfcatch.nativeerrorcode") AND #cfcatch.nativeerrorcode# GTE 28000>
+					<cfset iDBErr = cfcatch.nativeerrorcode />
+					<cfset errTT = cfcatch.queryError />
+				</cfif>
 			</cfif>
 		</cfcatch>
 	</cftry>
 	<cftry>
-		<cfset iRecordCount = qAlarm.RecordCount>
+		<cfset iRecordCount = qAlarm.RecordCount />
 		<cfcatch type="Any">
 			<cfset iRecordCount = 0 />
 			<cfset iDBErr IS 1 />
