@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,13 +24,20 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.17	mst	Added SYSTEM Username
+--->
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
+
 <cfquery name="qHostInstances" datasource="#Application.datasource#">
-	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_password, c.db_rac, c.db_servicename 
+	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_username, c.system_password, c.db_rac, c.db_servicename 
 	  from otrrep.otr_nfs_space_rep a, otrrep.otr_space_rep_max_timestamp_v b, otrrep.otr_db c 
 	 where TRUNC(a.rep_date) = b.rep_date 
 	   and UPPER(a.db_name) = UPPER(c.db_name) 
 	union
-	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_password, c.db_rac, c.db_servicename 
+	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_username, c.system_password, c.db_rac, c.db_servicename 
 	  from otrrep.otr_asm_space_rep a, otrrep.otr_space_rep_max_timestamp_v b, otrrep.otr_db c 
 	 where TRUNC(a.rep_date) = b.rep_date 
 	   and UPPER(a.db_name) = UPPER(c.db_name) 
@@ -77,7 +84,7 @@
 	<tbody>
 	<cfloop query="qHostInstances">
 		<!--- Decrypt the SYSTEM Password --->
-		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qHostInstances.system_password)) />
+		<cfset sPassword = Application.pw_hash.decryptOraPW(Trim(qHostInstances.system_password), Trim(sHashKey)) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
 		<cfif qHostInstances.db_rac IS 1>
@@ -87,7 +94,7 @@
 		</cfif>
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 		<cfset s.databasename = "#UCase(qHostInstances.db_name)#" />
-		<cfset s.username     = "system" />
+		<cfset s.username     = "#UCase(qHostInstances.system_username)#" />
 		<cfset s.password     = "#sPassword#" />
 		<cfset s.port         = "#qHostInstances.db_port#" />
 
@@ -127,6 +134,7 @@
 		<td><cfoutput>#sVersion#</cfoutput></td>
 	</tr>
 	<!--- <cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') /> --->
+	<!--- <cfset dRepDate = DateFormat(getDate.rep_date, 'yyyymmdd') /> --->
 	<cfset dRepDate = LSDateFormat(getDate.rep_date, 'medium') />
 	</cfloop>
 	</tbody>
