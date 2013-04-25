@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,14 +24,23 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.17	mst	Added SYSTEM Username
+	2013.04.24	mst	Using a better encryption method
+--->
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
+
 <cfquery name="qInsert" datasource="#application.datasource#">
 <cfif IsDefined("FORM.system_password") AND Trim(FORM.system_password GT "")>
 	insert into otr_db
-			(db_name, db_env, db_desc, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout) 
+			(db_name, db_env, db_desc, system_username, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout) 
 	 VALUES (<cfqueryparam value="#FORM.db_name#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_env#"  cfsqltype="cf_sql_varchar" />,
 	 		 <cfqueryparam value="#FORM.db_desc#" cfsqltype="cf_sql_varchar" />,
-	 		 <cfqueryparam value="#Application.pw_hash.encryptOraPW(Trim(FORM.system_password))#" cfsqltype="cf_sql_varchar" />,
+			 <cfqueryparam value="#FORM.system_username#" cfsqltype="cf_sql_varchar" />,
+	 		 <cfqueryparam value="#Application.pw_hash.encryptOraPW(Trim(FORM.system_password), Trim(sHashKey))#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_host#" cfsqltype="cf_sql_varchar" />,
 			 <cfqueryparam value="#FORM.db_port#" cfsqltype="cf_sql_integer" />,
 			 <cfif IsDefined("FORM.db_asm")>
