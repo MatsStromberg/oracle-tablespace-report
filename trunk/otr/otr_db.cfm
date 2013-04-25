@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,18 +16,22 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.24	mst	changed from tablesoter.js to dataTables.js
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select db_name, db_env, db_desc, system_password, db_host, db_port, db_rac, db_blackout
+	select db_name, db_env, db_desc, system_username, system_password, db_host, db_port, db_rac, db_blackout
 	from otr_db 
 	order by db_name
 </cfquery>
@@ -36,18 +40,21 @@
 <html>
 <head>
 	<title><cfoutput>#Application.company#</cfoutput> - Oracle Instances</title>
-<link rel="stylesheet" href="JScripts/jQuery/jquery.tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
 <!--
-$(document).ready(function(){
-	$("table").tablesorter({debug: false, widgets: ['zebra'],sortList: [[0,0]]});
-	$("table").bind("sortStart",function() {  
-		$("#sort_overlay").show();  
- 	}).bind("sortEnd",function() {  
-		$("#sort_overlay").hide();  
-	});  
-});
+$(document).ready( function() {
+  $('#custlist').dataTable( {
+    "aoColumns": [
+      null,
+      null,
+      { "bSortable": false },
+      { "bSortable": false },
+      { "bSortable": false }
+    ],
+    "sDom": '<"top"flp<"clear">>rt<"bottom"ifp<"clear">>' } );
+} );
+
 function makeDisableSubmit(){
     /*var x=document.getElementById("qSubmit");
     x.disabled=true;*/
@@ -108,7 +115,7 @@ function confirmation(txt, url) {
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">
-	<table border="0" cellpadding="0" cellspacing="0" class="tablesorter">
+	<table border="0" cellpadding="0" cellspacing="0" class="tablesorter" id="custlist">
 	<thead>
 	<tr>
 		<th width="100" style="font-size: 8pt;font-weight: bold;">SID</th>
@@ -116,7 +123,7 @@ function confirmation(txt, url) {
 		<th width="100" style="font-size: 8pt;font-weight: bold;">Environment</th>
 		<th width="140" style="font-size: 8pt;font-weight: bold;">Host</th>
 		<th width="50" style="font-size: 8pt;font-weight: bold;">Port</th>
-                <td width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
+		<td width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
 		<td width="120" style="font-size: 8pt;font-weight: bold;">SYSTEM Password</td>
 		<td width="30" style="font-size: 8pt; font-weight: bold;">&nbsp;</td>
 		<td align="center" width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
@@ -153,6 +160,19 @@ function confirmation(txt, url) {
 	</tr></cfoutput>
 	</tbody>
 	<tfoot>
+	<cfif qInstances.RecordCount GT 25><tr>
+		<th width="100" style="font-size: 8pt;font-weight: bold;">SID</th>
+		<th width="230" style="font-size: 8pt;font-weight: bold;">Description</th>
+		<th width="100" style="font-size: 8pt;font-weight: bold;">Environment</th>
+		<th width="140" style="font-size: 8pt;font-weight: bold;">Host</th>
+		<th width="50" style="font-size: 8pt;font-weight: bold;">Port</th>
+		<td width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
+		<td width="120" style="font-size: 8pt;font-weight: bold;">SYSTEM Password</td>
+		<td width="30" style="font-size: 8pt; font-weight: bold;">&nbsp;</td>
+		<td align="center" width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
+		<td align="center" width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
+		<td align="center" width="30" style="font-size: 8pt;font-weight: bold;">&nbsp;</td>
+	</tr></cfif>
 	<tr>
 		<td colspan="6" style="font-size: 8pt;font-weight: normal;font-style: oblique">Number of Instances: <cfoutput>#qInstances.RecordCount#</cfoutput></td>
 	</tr>
