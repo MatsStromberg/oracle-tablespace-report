@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,15 +24,22 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.17	mst	Added SYSTEM Username
+	2013.04.25	mst	changed from tablesoter.js to dataTables.js
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
 
 <cfquery name="qHostInstances" datasource="#application.datasource#">
-	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_password, c.db_rac, c.db_servicename 
+	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_username, c.system_password, c.db_rac, c.db_servicename 
 	  from otrrep.otr_nfs_space_rep a, otrrep.otr_space_rep_max_timestamp_v b, otrrep.otr_db c 
 	 where TRUNC(a.rep_date) = b.rep_date 
 	   and UPPER(a.db_name) = UPPER(c.db_name) 
 	union
-	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_password, c.db_rac, c.db_servicename 
+	select distinct a.hostname db_host, a.db_name, b.rep_date, c.db_port, c.system_username, c.system_password, c.db_rac, c.db_servicename 
 	  from otrrep.otr_asm_space_rep a, otrrep.otr_space_rep_max_timestamp_v b, otrrep.otr_db c 
 	 where TRUNC(a.rep_date) = b.rep_date 
 	   and UPPER(a.db_name) = UPPER(c.db_name) 
@@ -50,18 +57,14 @@
 <html>
 <head>
 	<title><cfoutput>#application.company#</cfoutput> - Oracle Hosts &amp; Instances</title>
-<link rel="stylesheet" href="JScripts/jQuery/jquery.tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
 <cfinclude template="_otr_css.cfm">
 <!--- <script src="JScripts/jQuery/jquery-1.5.2.min.js" type="text/javascript"></script> --->
 <script type="text/javascript">
 <!--
 $(document).ready(function(){
-	$("table").tablesorter({debug: false, widgets: ['zebra'],sortList: [[0,0]]});
-	$("table").bind("sortStart",function() {  
-		$("#sort_overlay").show();  
- 	}).bind("sortEnd",function() {  
-		$("#sort_overlay").hide();  
-	});  
+        $('#hostlist').dataTable( {
+          "sDom": '<"top"flp<"clear">>rt<"bottom"ifp<"clear">>'
+        });
 });
 
 function makeDisableSubmit(){
@@ -125,7 +128,7 @@ function confirmation(txt, url) {
 <tr>
 	<td class="bodyline">
 	<cfif qHostInstances.RecordCount IS NOT 0>
-	<table border="0" cellpadding="0" cellspacing="0" class="tablesorter">
+	<table border="0" cellpadding="0" cellspacing="0" class="tablesorter" id="hostlist">
 	<thead>
 	<tr>
 		<th width="200" style="font-size: 9pt;font-weight: bold;">Host</th>
@@ -134,16 +137,27 @@ function confirmation(txt, url) {
 	</tr>
 	</thead>
 	<tfoot>
-	<tr>
-		<th width="200" style="font-size: 9pt;font-weight: bold;">Host</th>
-		<th width="200" style="font-size: 9pt;font-weight: bold;">SID</th>
-		<th width="200" style="font-size: 9pt;font-weight: bold;">Release</th>
-	</tr>
+		<cfif qHostInstances.RecordCount GT 25><tr>
+			<th width="200" style="font-size: 9pt;font-weight: bold;">Host</th>
+			<th width="200" style="font-size: 9pt;font-weight: bold;">SID</th>
+			<th width="200" style="font-size: 9pt;font-weight: bold;">Release</th>
+		</tr>
+		<tr><cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') />
+			<td colspan="3" style="font-size: 8pt;font-weight: normal;font-style: oblique">Number of Instances: <cfoutput>#qHostInstances.RecordCount#, Stand of #dRepDate#</cfoutput></td>
+		</tr>
+		<tr>
+			<td colspan="3" style="font-size: 8pt;font-weight: normal; background-color: white;">Weekly PDF's are stored under <cfoutput>#Application.host_instance_pdf_dir#</cfoutput></td>
+		</tr><cfelse><tr><cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') />
+			<td colspan="3" style="font-size: 8pt;font-weight: normal;font-style: oblique">Number of Instances: <cfoutput>#qHostInstances.RecordCount#, Stand of #dRepDate#</cfoutput></td>
+		</tr>
+		<tr>
+			<td colspan="3" style="font-size: 8pt;font-weight: normal; background-color: white;">Weekly PDF's are stored under <cfoutput>#Application.host_instance_pdf_dir#</cfoutput></td>
+		</tr></cfif>
 	</tfoot>
 	<tbody>
 	<cfloop query="qHostInstances">
 		<!--- Decrypt the SYSTEM Password --->
-		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qHostInstances.system_password)) />
+		<cfset sPassword = Application.pw_hash.decryptOraPW(Trim(qHostInstances.system_password), Trim(sHashKey)) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
 		<cfif qHostInstances.db_rac IS 1>
@@ -153,7 +167,7 @@ function confirmation(txt, url) {
 		</cfif>
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 		<cfset s.databasename = "#UCase(qHostInstances.db_name)#" />
-		<cfset s.username     = "system" />
+		<cfset s.username     = "#UCase(qHostInstances.system_username)" />
 		<cfset s.password     = "#sPassword#" />
 		<cfset s.port         = "#qHostInstances.db_port#" />
 
@@ -195,14 +209,14 @@ function confirmation(txt, url) {
 	<cfset dRepDate = LSDateFormat(qHostInstances.rep_date, 'medium') /></cfloop>
 	</tbody>
 	</table>
-	<table border="0" cellpadding="0" cellspacing="0">
+<!---	<table border="0" cellpadding="0" cellspacing="0">
 	<tr>
 		<td style="font-size: 8pt;font-weight: normal;font-style: oblique">Number of Instances: <cfoutput>#qHostInstances.RecordCount#, Stand of #dRepDate#</cfoutput></td>
 	</tr>
 	<tr>
 		<td style="font-size: 8pt;font-weight: normal;">Weekly PDF's are stored under <cfoutput>#Application.host_instance_pdf_dir#</cfoutput></td>
 	</tr>
-	</table>
+	</table> --->
 	<cfelse>
 	No snapshots are available!!!
 	</cfif>
