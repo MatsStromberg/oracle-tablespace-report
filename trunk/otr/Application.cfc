@@ -44,7 +44,7 @@
 			Application.Query2Struct = CreateObject("component", "otr.query2struct");
 		</cfscript>
 		<!--- SQLNET.DEFAULT_DOMAIN for DB-Links --->
-		<cfset Application.oracle.domain_name = "MYDOMAIN.CH" />
+		<cfset Application.oracle.domain_name = "MYDOMAIN.COM" />
 		<!--- Datasource Settings --->
 		<cfset Application.datasource = "OTR_OTRREP" />
 		<cfset Application.dbusername = "OTRREP" />		<!--- Parameter not used anymore --->
@@ -91,5 +91,5 @@
 		<!--- Tablespace Monitoring Refresh, default 5 minute --->
 		<cfset Application.monitoring_cycle = 5 />
 	</cffunction>
-
+	
 </cfcomponent>
