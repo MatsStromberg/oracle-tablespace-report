@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,13 +16,18 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
+--->
+<!---
+	Long over due Change Log
+	2013.04.21	mst	Added initi of otrtip_u
+	2013.04.24	mst	changed from tablesoter.js to dataTables.js
 --->
 <link rel="shortcut icon" href="images/favicon.ico" />
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -39,13 +44,21 @@
 @import url("formIE.css");
 -->
 </style>
-<script src="JScripts/jQuery/jquery-1.6.4.min.js" type="text/javascript"></script>
+<script src="JScripts/jQuery/jquery-1.8.2.min.js" type="text/javascript"></script>
 <script src="JScripts/jQuery/jquery.tipTip.minified.js" type="text/javascript"></script>
-<script src="JScripts/jQuery/jquery.tablesorter/jquery.tablesorter.min.js" type="text/javascript"></script>
+<script src="JScripts/jQuery/jquery.dataTables/jquery.dataTables.min.js" type="text/javascript"></script>
+<link href="JScripts/jQuery/jquery.dataTables/jquery.dataTables.css" rel="stylesheet" type="text/css" />
+
 <script type="text/javascript">
 <!--
 $(document).ready(function(){
 	$(".otrtip").tipTip({
+		maxWidth: "auto",
+		edgeOffset: 10,
+		delay: 100
+	});
+	$(".otrtip_u").tipTip({
+		defaultPosition: "top",
 		maxWidth: "auto",
 		edgeOffset: 10,
 		delay: 100
