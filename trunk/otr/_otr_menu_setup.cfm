@@ -29,11 +29,11 @@
 	2013.04.21	mst	Handeling snapshot_day = 0
 --->
 <cfsetting enablecfoutputonly="true" />
-<cfquery name="qRepDateMax" datasource="#application.datasource#">
+<!--- <cfquery name="qRepDateMax" datasource="#application.datasource#">
 	select rep_date 
 	from otr_space_rep_max_timestamp_v 
 	order by rep_date desc
-</cfquery>
+</cfquery> --->
 <cfsetting enablecfoutputonly="false" /><a name="top"></a><table border="0" width="100%">
 <table border="0" width="100%">
 <tr>
@@ -45,11 +45,11 @@
 	<td align="center" valign="top" width="100">&nbsp;</td>
 	<td align="center" valign="top" width="100">&nbsp;</td>
 	<td align="center" valign="top" width="100">&nbsp;</td>
-	<td align="center" valign="top" width="100"><a href="<cfoutput>#application.ogc_logon_url#</cfoutput>" target="_blank" class="otrtip" title="<div align='center'>This is a direct<br />Link to the<br />Oracle GridControl</div>" onfocus="this.blur();">GridControl</a></td>
+	<td align="center" valign="top" width="100"><a href="<cfoutput>#application.ogc_logon_url#</cfoutput>" target="_blank" class="otrtip" title="<div align='center'>This is a direct<br />Link to the<br />Enterprise Manager</div>" onfocus="this.blur();">Enterprise Manager</a></td>
 	<td align="right" style="font-size: 8pt; font-weight: bold; color: rgb(124,43,66);"><img src="images/<cfoutput>#application.logo_image#</cfoutput>" alt="" width="186" height="45" border="0"></td>
 </tr>
 </table>
 <div id="loaderDiv" class="hideMe">&nbsp;</div>
-<div id="halgeDiv" class="hideMe">&nbsp;<div align="center" class="halgeHeading"><cfif Application.snapshot_day IS NOT 0>No manually generated Snapshots on <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>!</cfif> <div id="countDown"></div></div></div>
+<div id="halgeDiv" class="hideMe">&nbsp;<div align="center" class="halgeHeading"><cfif Application.snapshot_day IS NOT 0>No manually generated Snapshots on <cfoutput>#Dayofweekasstring(Application.snapshot_day)#</cfoutput>!</cfif><div id="countDown"></div></div></div>
 <iframe frameborder="0" name="snapshot" id="snapshot" src="" width="0" height="0" scrolling="NO"></iframe>
 <br />
