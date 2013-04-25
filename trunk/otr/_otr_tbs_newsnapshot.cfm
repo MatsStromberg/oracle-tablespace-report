@@ -33,6 +33,9 @@
 					to be in the same Instance as the EM Repositorys!!!
 	2013.04.18	mst	Added SYSTEM Username from the Target DB
 --->
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
+
 <cfset dToday = DateFormat(Now(),'dd-mm-yyyy')>
 <!--- <cfoutput>#dToday#<br />#CGI.HTTP_REFERER#</cfoutput> --->
 <!--- Delete any snapshot done TODAY except from Instances in Blackout status --->
@@ -56,7 +59,7 @@
 <cfset dRepDate = CreateODBCDateTime(CreateDateTime(Year(Now()),Month(Now()),Day(Now()),Hour(Now()),Minute(Now()),0)) />
 <!--- DB Instances with Password --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select db_name, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout
+	select db_name, system_username, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout
 	from otr_db
 	order by db_name
 </cfquery>
@@ -92,7 +95,7 @@
 			</cfif>
 
 			<!--- Decrypt the SYSTEM Password --->
-			<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
+			<cfset sPassword = Application.pw_hash.decryptOraPW(Trim(qInstances.system_password), Trim(sHashKey)) />
 			<!--- Create Temporary Data Source --->
 			<cfset s = StructNew() />
 			<cfif qInstances.db_rac IS 1>
@@ -132,7 +135,7 @@
 				  from otrrep.otr_cust_appl_tbs a
 				 where exists (select 1 from otrrep.otr_cust_appl_tbs b where b.cust_appl_id=a.cust_appl_id)
 				   and UPPER(a.db_name) = '#UCase(qInstances.db_name)#'
-				 order by cust_appl_id;
+				 order by cust_appl_id, db_tbs_name;
 			</cfquery>
 
 			<cfloop query="qTBS">
@@ -157,6 +160,8 @@
 					   GROUP BY tablespace_name) b
 					WHERE a.tablespace_name = b.tablespace_name(+)
 					  AND a.tablespace_name = '#qTBS.db_tbs_name#'
+					  AND NVL(ROUND(a.BYTES / 1024 / 1024 , 2),0) > 0
+
 				 ORDER BY ((a.BYTES - NVL (b.BYTES, 0)) / a.BYTES) DESC
 				</cfquery>
 				<!--- Tablespace Statistics --->
@@ -169,7 +174,6 @@
 					</cfquery>
 				</cfif>
 			</cfloop>
-
 			<!--- NFS Statistics --->
 			<cfquery name="qN" datasource="OTR_SYSMAN">
 				SELECT DISTINCT '#Trim(qInstances.db_name)#' db_name, n.target_name hostname, n.nfs_server,
