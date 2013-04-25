@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,6 +24,10 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.24	mst	changed from tablesoter.js to dataTables.js
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
 <cfquery name="qRepClient" datasource="#application.datasource#">
@@ -36,18 +40,21 @@
 <html>
 <head>
 	<title><cfoutput>#application.company#</cfoutput> - Oracle Customers</title>
-<link rel="stylesheet" href="JScripts/jQuery/jquery.tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
 <!--
-$(document).ready(function(){
-	$("table").tablesorter({debug: false, widgets: ['zebra'],sortList: [[1,0]]});
-	$("table").bind("sortStart",function() {  
-		$("#sort_overlay").show();  
- 	}).bind("sortEnd",function() {  
-		$("#sort_overlay").hide();  
-	});  
-});
+$(document).ready( function() {
+  $('#custlist').dataTable( {
+    "aoColumns": [
+      null,
+      null,
+      { "bSortable": false },
+      { "bSortable": false },
+      { "bSortable": false }
+    ],
+	"sDom": '<"top"flp<"clear">>rt<"bottom"ifp<"clear">>' } );
+} );
+
 function makeDisableSubmit(){
     /*var x=document.getElementById("qSubmit");
     x.disabled=true;*/
@@ -119,7 +126,7 @@ function confirmation(txt, url) {
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">
-	<table border="0" cellpadding="0" cellspacing="0" class="tablesorter">
+	<table border="0" cellpadding="0" cellspacing="0" class="tablesorter" id="custlist">
 	<thead>
 	<tr>
 		<th width="150" style="font-size: 11pt;font-weight: bold;">Company ID</th>
@@ -130,13 +137,13 @@ function confirmation(txt, url) {
 	</tr>
 	</thead>
 	<tfoot>
-	<tr>
+	<cfif qRepClient.RecordCount GT 25><tr>
 		<th width="150" style="font-size: 11pt;font-weight: bold;">Company ID</th>
 		<th width="300" style="font-size: 11pt;font-weight: bold;">Company name</th>
 		<td align="center" width="50" style="font-size: 9pt;font-weight: bold;">Edit</td>
 		<td align="center" width="50" style="font-size: 9pt;font-weight: bold;">Delete</td>
 		<td align="center" width="50" style="font-size: 9pt;font-weight: bold;">New</td>
-	</tr>
+	</tr></cfif>
 	</tfoot>
 	<tbody>
 	<cfif qRepClient.RecordCount IS 0><tr>
