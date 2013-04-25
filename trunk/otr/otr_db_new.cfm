@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,13 +16,17 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
+--->
+<!---
+	Long over due Change Log
+	2013.04.17	mst	Added SYSTEM Username
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 
@@ -75,6 +79,36 @@ function showDiv() {
 } 
 // -->
 </script>
+<style type="text/css">
+    .auto-hint { color: silver; }
+</style>
+<script type="text/javascript">
+    $(document).ready(function(){
+        //  Focus auto-focus fields
+        $('.auto-focus:first').focus();
+
+        //  Initialize auto-hint fields
+        $('INPUT.auto-hint, TEXTAREA.auto-hint').focus(function(){
+            if($(this).val() == $(this).attr('title')){
+                $(this).val('');
+                $(this).removeClass('auto-hint');
+            }
+        });
+
+        $('INPUT.auto-hint, TEXTAREA.auto-hint').blur(function(){
+            if($(this).val() == '' && $(this).attr('title') != ''){
+                $(this).val($(this).attr('title'));
+                $(this).addClass('auto-hint');
+            }
+        });
+
+        $('INPUT.auto-hint, TEXTAREA.auto-hint').each(function(){
+            if($(this).attr('title') == ''){ return; }
+            if($(this).val() == ''){ $(this).val($(this).attr('title')); }
+            else { $(this).removeClass('auto-hint'); }
+        });
+    });
+</script>
 </head>
 <body>
 <cfinclude template="_top_menu.cfm">
@@ -98,7 +132,7 @@ function showDiv() {
 				<option value="DSE">(DSE) Dedicated Standard Edition</option>
 				<option value="SEE" selected>(SEE) Shared Enterprise Edition</option>
 				<option value="SSE">(SSE) Shared Standard Edition</option>
-				<option value="DEV">(DEV) Deevelopment Enterprise Edition</option>
+				<option value="DEV">(DEV) Development Enterprise Edition</option>
 				<option value="INT">(INT) Internal Enterprise Edition</option>
 			</select>
 		</td>
@@ -106,6 +140,10 @@ function showDiv() {
 	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Description:&nbsp;</td>
 		<td width="300"><input type="text" name="db_desc" id="db_desc" value="" size="35"></td>
+	</tr>
+	<tr>
+		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">SYSTEM Username:&nbsp;</td>
+		<td width="300"><input type="text" name="system_username" id="system_username" value="" title="#UCase(Application.default_system_username)# is used as default" size="35" class="auto-hint"></td>
 	</tr>
 	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">SYSTEM Password:&nbsp;</td>
