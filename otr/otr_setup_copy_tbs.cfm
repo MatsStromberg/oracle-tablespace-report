@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,14 +24,17 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<!--- 
+<!---
 	Long over due Change Log
 	2012.05.20	mst	Delete of commented out code.
+	2013.04.17	mst	Added SYSTEM Username
 --->
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
 
 <!--- Pickup Thresholds from Target DB's --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select distinct a.db_name, b.system_password, b.db_host, b.db_port, b.db_rac, b.db_servicename
+	select distinct a.db_name, b.system_username, b.system_password, b.db_host, b.db_port, b.db_rac, b.db_servicename
 	  from otr_cust_appl_tbs a, otr_db b
 	 where UPPER(a.db_name) = UPPER(b.db_name)
 	order by a.db_name
@@ -70,7 +73,7 @@
 		</cfif>
 
 		<!--- Decrypt the SYSTEM Password --->
-		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
+		<cfset sPassword = Application.pw_hash.decryptOraPW(Trim(qInstances.system_password), Trim(sHashKey)) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
 		<cfif qInstances.db_rac IS 1>
@@ -81,7 +84,7 @@
 		<!--- <cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qHost.property_value)#:#qPort.property_value#:#UCase(qInstances.db_name)#" /> --->
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 		<cfset s.databasename = "#UCase(qInstances.db_name)#" />
-		<cfset s.username     = "system" />
+		<cfset s.username     = "#UCase(qInstances.system_username)#" />
 		<cfset s.password     = "#sPassword#" />
 		<cfset s.port         = "#iPort#" />
 
