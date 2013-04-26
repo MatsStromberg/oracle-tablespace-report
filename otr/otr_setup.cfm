@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -23,6 +23,10 @@
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
+--->
+<!---
+	Long over due Change Log
+	2013.04.25	mst	Updated Copyright note
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <!--- Customers available? --->
@@ -91,7 +95,7 @@
 	<cftry>
 		<cfquery name="qASMtableTest" datasource="#Application.datasource#">
 			select db_name
-			  from ots_asm_space_rep
+			  from otr_asm_space_rep
 		</cfquery>
 		<cfcatch type="Database">
 			<cfset bUpgrade = 1 />
@@ -126,8 +130,8 @@
 	<td class="bodyline" align="center" valign="top">
 		<strong>OTR Setup Menu</strong>
 		<table border="0" width="400">
-			<tr>
-				<td>
+		<tr>
+			<td>
 		<ul>
 		<cfif qDBInstances.RecordCount IS 0>
 			<li>1. <a href="otr_setup_db.cfm" onfocus="this.blur();">Get Instances from your EM Repository</a></li>
@@ -162,8 +166,8 @@
 		</cfif>
 		--->
 		</ul>
-				</td>
-			</tr>
+			</td>
+		</tr>
 		</table>
 	</td>
 </tr>
