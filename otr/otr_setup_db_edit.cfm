@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,10 +24,16 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.17	mst	Added SYSTEM Username
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
 
 <cfquery name="qEdit" datasource="#Application.datasource#" maxrows="1">
-	select db_name, db_env, db_desc, system_password, db_host, db_port, db_asm, db_rac, db_servicename
+	select db_name, db_env, db_desc, system_username, system_password, db_host, db_port, db_asm, db_rac, db_servicename
 	from otr_db 
 	where NVL(system_password,'$NONE$') = '$NONE$'
 	order by db_name
@@ -68,7 +74,7 @@
 				<option value="DSE"<cfif Trim(qEdit.db_env) IS "DSE"> selected</cfif>>(DSE) Dedicated Standard Edition</option>
 				<option value="SEE"<cfif Trim(qEdit.db_env) IS "SEE"> selected</cfif>>(SEE) Shared Enterprise Edition</option>
 				<option value="SSE"<cfif Trim(qEdit.db_env) IS "SSE"> selected</cfif>>(SSE) Shared Standard Edition</option>
-				<option value="DEV"<cfif Trim(qEdit.db_env) IS "DEV"> selected</cfif>>(DEV) Deevelopment Enterprise Edition</option>
+				<option value="DEV"<cfif Trim(qEdit.db_env) IS "DEV"> selected</cfif>>(DEV) Development Enterprise Edition</option>
 				<option value="INT"<cfif Trim(qEdit.db_env) IS "INT"> selected</cfif>>(INT) Internal Enterprise Edition</option>
 			</select>
 		</td>
@@ -78,8 +84,12 @@
 		<td width="300"><input type="text" name="db_desc" id="db_desc" value="#Trim(qEdit.db_desc)#" size="35"></td>
 	</tr>
 	<tr>
+		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">SYSTEM Username:&nbsp;</td>
+		<td width="300"><input type="text" name="system_username" id="system_username" value="#Trim(qEdit.system_username)#" size="35"></td>
+	</tr>
+	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">SYSTEM Password:&nbsp;</td>
-		<td width="300"><input type="password" name="system_password" id="system_password" value="<cfif Trim(qEdit.system_password) GT "" AND Trim(qEdit.system_password) IS NOT "$NONE$">#Application.pw_hash.decryptOraPW(Trim(qEdit.system_password))#</cfif>" size="35"><cfif URL.Error = "Yes">&nbsp;<img src="images/check_error.png" alt="Wrong Password" width="30" height="20" border="0"></cfif></td>
+		<td width="300"><input type="password" name="system_password" id="system_password" value="<cfif Trim(qEdit.system_password) GT "" AND Trim(qEdit.system_password) IS NOT "$NONE$">#Application.pw_hash.decryptOraPW(Trim(qEdit.system_password), Trim(sHashKey))#</cfif>" size="35"><cfif URL.Error = "Yes">&nbsp;<img src="images/check_error.png" alt="Wrong Password" width="30" height="20" border="0"></cfif></td>
 	</tr>
 	<tr>
 		<td width="300" align="right" style="font-size: 9pt;font-weight: bold;">Hostname:&nbsp;</td>
