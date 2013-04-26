@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -23,6 +23,10 @@
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
+--->
+<!---
+	Long over due Change Log
+	2013.04.19	mst	Cleaned up some commented code
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cfif NOT IsDefined("FORM.db_name")><cflocation url="otr_tbs_trend.cfm" addtoken="No"></cfif>
@@ -175,7 +179,6 @@ snow, springgreen, steelblue, tan, teal, thistle, tomato, turquoise, violet, vio
 		seriescolor="lavender">
 	<cfoutput>
 		<cfchartdata item="#DateFormat(qTrend.rep_date, 'dd.mm.yyyy')#" value="#qTrend.db_tbs_real_used_mb#">
-		<!--- #DateFormat(qTrend.rep_date, 'dd.mm.yyyy')# - #qTrend.db_tbs_used_mb#<br /> --->
 	</cfoutput>
 	</cfchartseries>
 	<cfchartseries
@@ -184,7 +187,6 @@ snow, springgreen, steelblue, tan, teal, thistle, tomato, turquoise, violet, vio
 		seriescolor="lightblue">
 	<cfoutput>
 		<cfchartdata item="#DateFormat(qTrend.rep_date, 'dd.mm.yyyy')#" value="#qTrend.db_tbs_can_grow_mb#">
-		<!--- #DateFormat(qTrend.rep_date, 'dd.mm.yyyy')# - #qTrend.db_tbs_used_mb#<br /> --->
 	</cfoutput>
 	</cfchartseries>
 	</cfchart><br /><br />
