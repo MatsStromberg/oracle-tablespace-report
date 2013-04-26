@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,22 +16,26 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<!--- 
+<!---
 	Long over due Change Log
 	2012.05.18	mst	Updating Target DB's with Warning and Critical Thresholds
 					set by the CSV or the Excel sheet.
 					Deleteing all Thresholds on the Target that has the same 
 					value as the Instance Default values.
+	2013.04.17	mst	Added SYSTEM Username
 --->
 <cfsetting enablecfoutputonly="true" />
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
+
 <cfset cDirSep = FileSeparator() />
 <cfset bExcel = 0>
 <cfset sPath = GetDirectoryfrompath(GetBasetemplatePath()) />
@@ -230,7 +234,7 @@ BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,NULL,NULL,NULL,NULL,1,1,NULL,5,'OTR_R
 
 --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select db_name, system_password, db_host, db_port, db_rac, db_servicename
+	select db_name, system_username, system_password, db_host, db_port, db_rac, db_servicename
 	  from otr_db
 	 where db_blackout = 0
 	 order by db_name
@@ -267,7 +271,7 @@ BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,NULL,NULL,NULL,NULL,1,1,NULL,5,'OTR_R
 		</cfif>
 
 		<!--- Decrypt the SYSTEM Password --->
-		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
+		<cfset sPassword = Application.pw_hash.decryptOraPW(Trim(qInstances.system_password), Trim(sHashKey)) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
 		<cfif qInstances.db_rac IS 1>
@@ -277,7 +281,7 @@ BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,NULL,NULL,NULL,NULL,1,1,NULL,5,'OTR_R
 		</cfif>
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 		<cfset s.databasename = "#UCase(qInstances.db_name)#" />
-		<cfset s.username     = "system" />
+		<cfset s.username     = "#UCase(qInstances.system_username)#" />
 		<cfset s.password     = "#sPassword#" />
 		<cfset s.port         = "#iPort#" />
 
@@ -294,6 +298,19 @@ BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,NULL,NULL,NULL,NULL,1,1,NULL,5,'OTR_R
 			 where db_name = '#UCase(qInstances.db_name)#'
 			 order by db_name, db_tbs_name
 		</cfquery>
+		<!---
+		DBMS_SERVER_ALERT.SET_THRESHOLD(arguments...)
+		Param 1:	9000 = 	DBMS_SERVER_ALERT.TABLESPACE_PCT_FULL
+		Param 2:	4 =		DBMS_SERVER_ALERT.OPERATOR_GE
+		Param 3:	=		Warning Threshhold
+		Param 4:	4 =		DBMS_SERVER_ALERT.OPERATOR_GE
+		Param 5:	=		Critical Threshold
+		Param 6:	1 = 	obervation_period
+		Param 7:	1 =		consecutive_occurrences
+		Param 8:	NULL	Instance Name
+		Param 9:	5 = 	DBMS_SERVER_ALERT.OBJECT_TYPE_TABLESPACE
+		Param 10:	=		TABLSPACE_NAME
+		--->
 		<cfloop query="qTBSthreshold">
 			<cfquery name="qUpdateThresholds" datasource="#UCase(qInstances.db_name)#temp">
 				BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(<cfoutput>9000,4,'#qTBSthreshold.threshold_warning#',4,'#qTBSthreshold.threshold_critical#',1,1,NULL,5,'#qTBSthreshold.db_tbs_name#'</cfoutput>); END;
@@ -313,7 +330,7 @@ BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,NULL,NULL,NULL,NULL,1,1,NULL,5,'OTR_R
 			where metrics_name like '%Tablespace Space Usage'
 			  and nvl(object_name,'-OTR-TBS-') <> '-OTR-TBS-'
 		</cfquery>
-		<!--- Delete Thresholds that have the default values --->
+		<!--- Delete Thresholds for tablespaces that have the default values --->
 		<cfloop query="qTHnonedefault">
 			<cfif qTHnonedefault.warning_value IS qTHdefault.warning_value AND qTHnonedefault.critical_value IS qTHdefault.critical_value>
 				<cfquery name="qDeleteThresholds" datasource="#UCase(qInstances.db_name)#temp">
@@ -321,7 +338,6 @@ BEGIN DBMS_SERVER_ALERT.SET_THRESHOLD(9000,NULL,NULL,NULL,NULL,1,1,NULL,5,'OTR_R
 				</cfquery>
 			</cfif>
 		</cfloop>
-
 
 		<cfcatch type="Database">
 			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
