@@ -28,8 +28,35 @@
 	Long over due Change Log
 	2013.04.15	mst	Created New OTRREP Schema
 	2013.04.17	mst	Getting default SYSTEM Username from Application.cfc
+	2013.04.23	mst	Added new stronger Password decryption
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
+<!--- Create OTR_VER --->
+<cfquery name="qCreateOTR_VER" datasource="#Application.datasource#">
+	CREATE TABLE OTR_VER
+	 (OTR_VER VARCHAR2(20)	NOT NULL
+	 ,OTR_KEY VARCHAR2(200) NOT NULL
+	 ,OTR_OLD_KEY VARCHAR2(200))
+	 TABLESPACE OTR_REP_DATA
+</cfquery>
+<!--- Add comments to Columns --->
+<cfquery name="qCommentOTR_VER01" datasource="#Application.datasource#">
+	COMMENT ON COLUMN OTRREP.OTR_VER.OTR_VER IS 'Current version or OTR'
+</cfquery>
+<cfquery name="qCommentOTR_VER02" datasource="#Application.datasource#">
+	COMMENT ON COLUMN OTRREP.OTR_VER.OTR_KEY IS 'Current Encryption/Decrytion Hash Key'
+</cfquery>
+<cfquery name="qCommentOTR_VER03" datasource="#Application.datasource#">
+	COMMENT ON COLUMN OTRREP.OTR_VER.OTR_OLD_KEY IS 'Previous Encryption/Decrytion Hash Key'
+</cfquery>
+<!--- Generate New AES Key --->
+<cfset key = generateSecretKey("AES") />
+<!--- Insert Version and Key(s) --->
+<cfquery name="qUpdateOTR_VER" datasource="#Application.datasource#">
+	insert into OTR_VER (otr_ver, otr_key, otr_old_key)
+		values ('2.1', '#key#', '#Application.system_pw_hash#')
+</cfquery>
+
 <!--- Create OTR_DB --->
 <cfquery name="qCreateOTR_DB" datasource="#Application.datasource#">
 	CREATE TABLE OTR_DB
