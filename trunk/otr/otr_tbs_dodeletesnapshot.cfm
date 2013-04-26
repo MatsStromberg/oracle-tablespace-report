@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,6 +24,10 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.22	mst	Deleteing records in otr_asm_space_rep.
+--->
 <cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cfquery name="qDelete" datasource="#application.datasource#">
 	delete from otr_db_space_rep a
@@ -31,6 +35,10 @@
 </cfquery>
 <cfquery name="qDelete2" datasource="#application.datasource#">
 	delete from otr_nfs_space_rep a
+	where trunc(a.rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
+</cfquery>
+<cfquery name="qDelete3" datasource="#application.datasource#">
+	delete from otr_asm_space_rep a
 	where trunc(a.rep_date) = trunc(to_date('#FORM.rep_date#','DD-MM-YYYY'))
 </cfquery>
 <cfsetting enablecfoutputonly="false">
