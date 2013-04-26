@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,14 +24,21 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.17	mst	Added SYSTEM Username
+--->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
+
 <cfif IsDefined("URL.SID")>
 	<cfset sOraSID = URL.SID />
 <cfelse>
 	<cfabort>
 </cfif>
 <cfquery name="qInstance" datasource="#application.datasource#">
-	select db_name, system_password, db_host, db_port, db_rac, db_servicename 
+	select db_name, system_username, system_password, db_host, db_port, db_rac, db_servicename 
 	from otr_db 
 	where UPPER(db_name) = '#UCase(Trim(sOraSID))#'
 	order by db_name
@@ -82,35 +89,35 @@
 		</cfif>
 		<cfset sHost = Trim(qHost.property_value) />
 	<cfelse>
-                <!--- Check if it's a Cluster/RAC --->
-                <cfquery name="qRACcheck" datasource="OTR_SYSMAN">
-                        select database_name, global_name
-                          from MGMT$DB_DBNINSTANCEINFO
-                         where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
-                           and target_type = 'oracle_database'
-                </cfquery>
-                <cfif qRACcheck.RecordCount GT 1>
-                        <cfset bRAC = 1 />
-                        <cfquery name="qServiceName" datasource="OTR_SYSMAN">
-                                select distinct global_name
-                                  from MGMT$DB_DBNINSTANCEINFO
-                                 where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
-                        </cfquery>
-                        <cfset sHost = Trim(qInstance.db_host) />
+		<!--- Check if it's a Cluster/RAC --->
+		<cfquery name="qRACcheck" datasource="OTR_SYSMAN">
+			select database_name, global_name
+			  from MGMT$DB_DBNINSTANCEINFO
+			 where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
+			   and target_type = 'oracle_database'
+		</cfquery>
+		<cfif qRACcheck.RecordCount GT 1>
+			<cfset bRAC = 1 />
+			<cfquery name="qServiceName" datasource="OTR_SYSMAN">
+				select distinct global_name
+				  from MGMT$DB_DBNINSTANCEINFO
+				 where UPPER(database_name) = '#Trim(UCase(qInstance.db_name))#'
+			</cfquery>
+			<cfset sHost = Trim(qInstance.db_host) />
 			<cfif Trim(qInstance.db_servicename) IS "">
-	                        <cfset sServiceName = qServiceName.global_name />
+				<cfset sServiceName = qServiceName.global_name />
 			<cfelse>
 				<cfset sServiceName = Trim(qInstance.db_servicename) />
 			</cfif>
-                <cfelse>
-                        <cfset bRAC = 0 />
+		<cfelse>
+			<cfset bRAC = 0 />
 			<cfset sHost = Trim(qInstance.db_host) />
 			<cfset bRAC = 0 />
 		</cfif>
 	</cfif>
 
 	<!--- Decrypt the SYSTEM Password --->
-	<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstance.system_password)) />
+	<cfset sPassword = Application.pw_hash.decryptOraPW(Trim(qInstance.system_password), Trim(sHashKey)) />
 	<!--- Create Temporary Data Source --->
 	<cfset s = StructNew() />
 	<cfif bRAC IS 1>
@@ -122,7 +129,7 @@
 	</cfif>
 	<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 	<cfset s.databasename = "#UCase(qInstance.db_name)#" />
-	<cfset s.username     = "system" />
+	<cfset s.username     = "#UCase(qInstance.systgem_username)#" />
 	<cfset s.password     = "#sPassword#" />
 	<cfset s.port         = "#iPort#" />
 
