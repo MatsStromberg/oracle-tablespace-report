@@ -27,6 +27,7 @@
 <!---
 	Long over due Change Log
 	2013.04.22	mst	Added change log.
+	2013.04.26	mst	Handling Application.snapshot_day = 0
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cfquery name="qRepDate" datasource="#application.datasource#">
@@ -100,7 +101,7 @@ function showDiv() {
 	<td>
 		<cfif iRecordCount IS NOT 0><select name="rep_date"><cfoutput query="qRepDate"><cfif DayOfWeek(qRepDate.rep_date) IS NOT Application.snapshot_day>
 		<option value="#DateFormat(qRepDate.rep_date,"dd-mm-yyyy")#">#LSDateFormat(qRepDate.rep_date,'medium')#</option></cfif>
-		</cfoutput></select> <span style="font-style: oblique;">Friday Snapshots are not listed</span><cfelse><span style="font-style: oblique;">No Snapshots to delete.... only Friday Snapshots left.</span></cfif>
+		</cfoutput></select> <cfif Application.snapshot_day IS NOT 0><span style="font-style: oblique;">Friday Snapshots are not listed</span></cfif><cfelse><span style="font-style: oblique;">No Snapshots to delete....<cfif Application.snapshot_day IS NOT 0> only Friday Snapshots left.</cfif></span></cfif>
 	</td>
 </tr>
 <tr>
