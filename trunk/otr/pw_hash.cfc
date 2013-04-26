@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,9 +24,31 @@
     along with the Ooracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2013.04.23	mst	Changed Encryption/Decryption to use a stronger method.
+	2013.04.23	mst	Hashkey stored in table OTR_VER
+	2013.04.23	mst	Added new function  to lookup the hash key
+--->
 <cfcomponent displayname="pw_hash"
 		output="false" 
 		hint="Encrypting/Decrypting Oracle Passswords">
+
+	<!---
+		Lookup Key
+	--->
+	<cffunction name="lookupKey"
+				access="public"
+				output="false"
+				returntype="string"
+				hint="Returns the current Hash key">
+		<cfquery name="qLookupHashKey" datasource="#Application.datasource#">
+			select otr_key
+			  from otr_ver
+			 where otr_ver = '2.1'
+		</cfquery>
+		<cfreturn qLookupHashKey.otr_key>
+	</cffunction>
 
 	<!--- 
 		decryptOraPW
@@ -40,13 +62,21 @@
 		<cfargument name="password"
 					type="string"
 					required="true"
-					hint="A string that contains an encrypted Oracle Password">
+					hint="A string that contains an encrypted Oracle Password" />
 
-			<cfset locals.decryptedString = decrypt(password,Application.system_pw_hash)>
+		<cfargument name="hashKey"
+					type="string"
+					required="true"
+					hint="A string that contains an Hash Key" />
+
+			<cfset locals.decryptedString = decrypt(Trim(password), Trim(hashKey), "AES/CBC/PKCS5Padding", "HEX") />
 			<!--- Return the decrypted string --->
-			<cfreturn locals.decryptedString>
+			<cfreturn locals.decryptedString />
 	</cffunction>
 
+	<!--- 
+		encryptOraPW
+	--->
 	<cffunction name="encryptOraPW"
 				access="public"
 				output="false"
@@ -58,7 +88,12 @@
 					required="true"
 					hint="A string that contains an decrypted Oracle Password">
 
-			<cfset locals.encryptedString = encrypt(password,Application.system_pw_hash)>
+		<cfargument name="HashKey"
+					type="string"
+					required="true"
+					hint="A string that contains an Hash Key">
+
+			<cfset locals.encryptedString = encrypt(password,HashKey, "AES/CBC/PKCS5Padding", "HEX")>
 			<!--- Return the decrypted string --->
 			<cfreturn locals.encryptedString>
 	</cffunction>
