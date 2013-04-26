@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,9 +16,9 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
@@ -27,6 +27,8 @@
 <!---
 	Long over due Change Log
 	2012.05.25	mst	Added some more Tool-Tip's
+	2013.04.19	mst	Removed old code about Chart problem on Linux (which was not true)
+					This was solved with JAVA_OPTIONS=-Djava.awt.headless=true
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true" />
 <cfquery name="qInstance" datasource="#Application.datasource#">
@@ -47,7 +49,6 @@
 	group by extract(YEAR from rep_date)
 	order by extract(YEAR from rep_date) DESC
 </cfquery>
-<cfset noChart = "No">
 <cfsetting enablecfoutputonly="false" />
 <html>
 <head>
@@ -118,15 +119,10 @@ function showDiv() {
 		} 
 	} 
 }
-function chartBugLinux(){
-	if (<cfoutput>'#CGI.SERVER_NAME#'</cfoutput> == 'minerva') {
-		makeDisableSubmit();
-	}
-}
 // -->
 </script>
 </head>
-<body onload="hideDiv(); makeEnableSubmit();makeEnable();<cfif noChart IS "Yes"> chartBugLinux();</cfif>">
+<body onload="hideDiv(); makeEnableSubmit();makeEnable();">
 <cfinclude template="_top_menu.cfm">
 <div align="center">
 <h2><cfoutput>#application.company#</cfoutput> - Instance Tablespace Trend</h2>
@@ -174,7 +170,7 @@ function chartBugLinux(){
 	<td colspan="11" align="center"><input type="submit" name="qSubmit" id="qSubmit" value="Show Trend"></td>
 </tr>
 </table>
-</form><cfif CGI.SERVER_NAME IS "minerva" AND noChart IS "Yes">At the moment the CHART function doesn't work on a Linux Server...</cfif>
+</form>
 	</td>
 </tr>
 <tr>
