@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -24,10 +24,15 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
+<!---
+	Long over due Change Log
+	2012.05.20	mst	Delete of commented out code.
+	2013.04.17	mst	Added SYSTEM Username
+--->
 
 <!--- Pickup Thresholds from Target DB's --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
-	select distinct db_name, db_host, db_port, system_password, db_rac, db_servicename
+	select distinct db_name, db_host, db_port, system_username, system_password, db_rac, db_servicename
 	  from otr_db
 	order by db_name
 </cfquery>
@@ -47,7 +52,7 @@
 		</cfif>
 		<cfset s.drivername   = "oracle.jdbc.OracleDriver" />
 		<cfset s.databasename = "#UCase(qInstances.db_name)#" />
-		<cfset s.username     = "system" />
+		<cfset s.username     = "#UCase(qInstances.system_username)#" />
 		<cfset s.password     = "#sPassword#" />
 		<cfset s.port         = "#qInstances.db_port#" />
 
@@ -57,7 +62,11 @@
 		<cfif NOT DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
 			<cfset DataSourceCreate("#UCase(qInstances.db_name)#temp", s) />
 		</cfif>
-
+		<!---
+		<cfoutput>
+		   jdbc:oracle:thin:@#LCase(qInstances.db_host)#:#qInstances.db_port#/#UCase(qInstances.db_servicename)#
+		</cfoutput>
+		--->
 		<!--- Get all tablespaces except SYSTEM, SYSAUX, TEMP% and UNDO% --->
 		<cfquery name="qAllTBS" datasource="#UCase(qInstances.db_name)#temp">
 			select tablespace_name 
