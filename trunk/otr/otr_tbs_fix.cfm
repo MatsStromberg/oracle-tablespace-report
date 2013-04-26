@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,26 +16,30 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<!--- 
+<!---
 	Long over due Change Log
 	2012.05.16	mst	Fixed adding and Increasing Tablespaces stored on ASM 
+	2013.04.17	mst	Added SYSTEM Username
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cfsetting enablecfoutputonly="false">
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
+
 <cfif IsDefined("URL.SID") AND Trim(URL.SID) GT ""><cfset oraSID = Trim(URL.SID) /><cfelse>No SID passed<cfabort></cfif>
 <cfif IsDefined("URL.TBS") AND Trim(URL.TBS) GT ""><cfset oraTBS = Trim(URL.TBS) /><cfelse>No Tablespace passed<cfabort></cfif>
 
 <!--- Get the System Password --->
 <cfquery name="qInstances" datasource="#application.datasource#">
-	select db_name, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout
+	select db_name, system_username, system_password, db_host, db_port, db_asm, db_rac, db_servicename, db_blackout
 	from otr_db 
 	where UPPER(db_name) = '#Trim(UCase(oraSID))#'
 	order by db_name
@@ -45,7 +49,7 @@
 <cfif Trim(qInstances.system_password) IS "">
 	No System PASSWORD defined<cfabort>
 <cfelse>
-	<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
+	<cfset sPassword = Application.pw_hash.decryptOraPW(Trim(qInstances.system_password), Trim(sHashKey)) />
 </cfif>
 
 <!--- Get Listener Port --->
@@ -85,7 +89,7 @@
 </cfif>
 <cfset s.drivername   = "oracle.jdbc.OracleDriver">
 <cfset s.databasename = "#UCase(oraSID)#">
-<cfset s.username     = "system">
+<cfset s.username     = "#UCase(qInstances.system_username)#">
 <cfset s.password     = "#sPassword#">
 <cfset s.port         = "#iPort#">
 
