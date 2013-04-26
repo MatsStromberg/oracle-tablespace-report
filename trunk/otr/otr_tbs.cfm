@@ -1,5 +1,5 @@
 <!---
-    Copyright (C) 2010-2012 - Oracle Tablespace Report Project - http://www.network23.net
+    Copyright (C) 2010-2013 - Oracle Tablespace Report Project - http://www.network23.net
     
     Contributing Developers:
     Mats Strömberg - ms@network23.net
@@ -16,13 +16,18 @@
     of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
     General Public License for more details.
 	
-	The Oracle Tablespace Report do need an Oracle Grid Control 10g Repository
-	(Copyright Oracle Inc.) since it will get some of it's data from the Grid 
-	Repository.
+	The Oracle Tablespace Report do need an Oracle Enterprise
+	Manager 10g or later Repository (Copyright Oracle Inc.)
+	since it will get some of it's data from the EM Repository.
     
     You should have received a copy of the GNU General Public License 
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
+--->
+<!---
+	Long over due Change Log
+	2013.04.22	mst	Removed commented code not used anymore.
+	2013.04.24	mst	changed from tablesoter.js to dataTables.js
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cfset cDirSep = FileSeparator() />
@@ -31,97 +36,12 @@
 
 <!--- TODO: Fix a new way to load the OTR_CUST_APPL_TBS Table if it's empty! --->
 
-<!---
-<!--- Does the file exist ? If not it's a new Setup --->
-<cfif cDirSep IS "/">
-	<cfset sFileCheck = #Application.ogc_external_table# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
-<cfelse>
-	<cfset sFileCheck = #sTemplatePath# & #cDirSep# & "OTR_CUST_APPL_TBS_XT.DAT" />
-</cfif>
-<!--- Create a new OTR_CUST_APPL_TBS_XT.DAT if it doesn't exists --->
-<cfif NOT FileExists(sFileCheck)>
-	<!---
-		Are we on a local Windows host without direct access to the external table ?
-		If so, and if there is a valid external table defined remote... create a
-		new OTR_CUST_APPL_TBS_XT.DAT
-	--->
-	<cfquery name="qExtTbl" datasource="#Application.datasource#">
-		select * from otr_cust_appl_tbs_xt
-		order by db_name, db_tbs_name
-	</cfquery>
-	<cfif qExtTbl.RecordCount IS NOT 0>
-		<!--- External Table Exists but no local OTR_CUST_APPL_TBS_XT.DAT file --->
-		<cfset oFile = FileOpen(sFileCheck,"write")>
-		<cfoutput query="qExtTbl">
-			<cfif Trim(qExtTbl.db_name) IS NOT ""><cfset sDummy = FileWriteline(oFile, "#Trim(qExtTbl.cust_id)#;#Trim(qExtTbl.cust_appl_id)#;#Trim(qExtTbl.db_name)#;#Trim(qExtTbl.db_tbs_name)#")></cfif>
-		</cfoutput>
-		<cfset bDummy = FileClose(oFile)>
-		<cfif cDirSep IS "\"><cfexecute name="#Application.WINdos2unix#" arguments="#chr(34)##sFileCheck##chr(34)#" timeout="10"></cfexecute></cfif>
-	<cfelse>
-		<!--- No OTR_CUST_APPL_TBS_XT.DAT file and no remote external table --->
-		<cfquery name="qAllDBs" datasource="#Application.datasource#">
-			select * from otr_db
-			 order by db_name
-		</cfquery>
-		<cfset sCustID = "" />
-		<cfquery name="qGetCustomer" datasource="#Application.datasource#">
-			select cust_id from otr_cust
-			 order by cust_id
-		</cfquery>
-		<cfoutput query="qGetCustomer">
-			<cfif sCustID IS "">
-				<cfset sCustID = Trim(qGetCustomer.cust_id) />
-			</cfif>
-		</cfoutput>
-		<!--- Change the file extention from .xls to .tmp and generate the CSV File --->
-		<cfset oFile = FileOpen(ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL"),"write")>
-		<cfoutput query="qAllDBs">
-			<cfif Trim(qAllDBs.db_name) IS NOT ""><cfset sDummy = FileWriteline(oFile, "#Trim(sCustID)#;#Trim(qAllDBs.db_desc)#;#Trim(qAllDBs.db_name)#;NOT DEFINED")></cfif>
-		</cfoutput>
-		<cfset bDummy = FileClose(oFile)>
-		<!--- Make sure the file is in UNIX Format --->
-		<cfif cDirSep IS "/"><cfexecute name="#Application.UXdos2unix#" arguments="#chr(34)##ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")##chr(34)#" timeout="10"></cfexecute></cfif>
-		<cfif cDirSep IS "\"><cfexecute name="#Application.WINdos2unix#" arguments="#chr(34)##ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")##chr(34)#" timeout="10"></cfexecute></cfif>
-		<!--- Use SFTP to transfer the, uploaded or generated from .xls, CSV File under user Oracle and with extention .DAT
-		      This is used as an External Table in Oracle. --->
-		<cfscript>
-		    fso = CreateObject("java", "org.apache.commons.vfs.FileSystemOptions").init(); 
-		    CreateObject("java", "org.apache.commons.vfs.provider.sftp.SftpFileSystemConfigBuilder").getInstance().setStrictHostKeyChecking(fso, "no"); 
-			Selectors = CreateObject("java", "org.apache.commons.vfs.Selectors");
-	
-		    fsManager = CreateObject("java", "org.apache.commons.vfs.VFS").getManager(); 
-	
-		    uri = "sftp://#Application.sftpUser#:#Application.sftpPass#@#Application.sftpHost##Application.ogc_external_table#/OTR_CUST_APPL_TBS_XT.DAT"; 
-	
-		    fo = fsManager.resolveFile(uri, fso); 
-		    lfo = fsManager.resolveFile("#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#"); 
-	
-			fo.copyFrom(lfo, Selectors.SELECT_SELF);
-			
-		    lfo.close();
-			fs = fo.getFileSystem();
-		
-		    fsManager.closeFileSystem(fs); 
-		</cfscript> 
 
-		<!--- Delete the file with extention .tmp --->
-		<cfset b = FileDelete('#ReplaceNoCase(sFileCheck, ".DAT", ".tmp", "ALL")#') />
-	
-	</cfif>
-</cfif>
-<cfif cDirSep IS "/">
-	<cfset sFile = FileRead('#Application.ogc_external_table##cDirSep#OTR_CUST_APPL_TBS_XT.DAT') />
-<cfelse>
-	<cfset sFile = FileRead('#sTemplatePath##cDirSep#OTR_CUST_APPL_TBS_XT.DAT') />
-</cfif>
---->
-
-<!--- <cfset qParFile = csvread( string=sFile, headerline=False,delimiter=";") /> --->
 <cfquery name="qParFile" datasource="#Application.datasource#">
 	select * from otr_cust_appl_tbs
 	order by db_name, db_tbs_name
 </cfquery>
-<!--- <cfset qParFile = csvread=args> --->
+
 <!--- Generate a New Excel file --->
 <cftry>
 	<cfset xlsTBSobj = SpreadsheetNew(false) />
@@ -171,17 +91,13 @@
 <html>
 <head>
 	<title><cfoutput>#Application.company#</cfoutput> - Oracle Customer/App/Tablespace</title>
-<link rel="stylesheet" href="JScripts/jQuery/jquery.tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
 <cfinclude template="_otr_css.cfm">
 <script type="text/javascript">
 <!--
 $(document).ready(function(){
-	$("table").tablesorter({debug: false, widgets: ['zebra'],sortList: [[0,0]]});
-	$("table").bind("sortStart",function() {  
-		$("#sort_overlay").show();  
- 	}).bind("sortEnd",function() {  
-		$("#sort_overlay").hide();  
-	});  
+        $('#tablespace').dataTable( {
+          "sDom": '<"top"flp<"clear">>rt<"bottom"ifp<"clear">>'
+        });
 });
 
 function makeDisableSubmit(){
@@ -247,7 +163,7 @@ function confirmation(txt, url) {
 <table border="0" cellpadding="5">
 <tr>
 	<td class="bodyline">
-	<table border=0 class="tablesorter">
+	<table border=0 class="tablesorter" id="tablespace">
 	<thead>
 	<tr>
 		<th align="right" width="30" style="font-size: 9pt;font-weight: bold;">#&nbsp;</th>
@@ -261,7 +177,7 @@ function confirmation(txt, url) {
 	</thead>
 	<tbody>
 	<cfoutput query="qParFile"><tr<cfif qParFile.CurrentRow mod 2> class="alternate"</cfif>>
-		<td align="right"><cfif qParFile.currentRow LT 100>&nbsp;</cfif><cfif qParFile.currentRow LT 10>&nbsp;</cfif>#qParFile.currentRow#&nbsp;</td>
+		<td align="right"><cfif qParFile.currentRow LT 10000>&nbsp;</cfif><cfif qParFile.currentRow LT 1000>&nbsp;</cfif><cfif qParFile.currentRow LT 100>&nbsp;</cfif><cfif qParFile.currentRow LT 10>&nbsp;</cfif>#qParFile.currentRow#&nbsp;</td>
 		<td>#qParFile.cust_id#</td>
 		<td>#qParFile.cust_appl_id#</td>
 		<td>#qParFile.db_name#</td>
