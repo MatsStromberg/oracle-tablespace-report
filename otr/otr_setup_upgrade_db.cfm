@@ -27,9 +27,66 @@
 <!---
 	Long over due Change Log
 	2013.04.18	mst	Created DB upgrade template for Release 2.1
+	2013.04.23	mst	Added new stronger Password decryption
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cfset bDropDirectory = 0 />
+<!--- OTR_VER --->
+<cftry>
+	<!--- OTR_VER --->
+	<cfquery name="qCheckOTR_VER01" datasource="#Application.datasource#">
+		select * from otr_ver
+	</cfquery>
+	<cfcatch type="Database">
+		<!--- Create OTR_VER --->
+		<cfquery name="qCreateOTR_VER" datasource="#Application.datasource#">
+			CREATE TABLE OTR_VER
+			 (OTR_VER VARCHAR2(20)	NOT NULL
+			 ,OTR_KEY VARCHAR2(200) NOT NULL
+			 ,OTR_OLD_KEY VARCHAR2(200))
+			 TABLESPACE OTR_REP_DATA
+		</cfquery>
+		<!--- Add comments to Columns --->
+		<cfquery name="qCommentOTR_VER01" datasource="#Application.datasource#">
+			COMMENT ON COLUMN OTRREP.OTR_VER.OTR_VER IS 'Current version or OTR'
+		</cfquery>
+		<cfquery name="qCommentOTR_VER02" datasource="#Application.datasource#">
+			COMMENT ON COLUMN OTRREP.OTR_VER.OTR_KEY IS 'Current Encryption/Decrytion Hash Key'
+		</cfquery>
+		<cfquery name="qCommentOTR_VER03" datasource="#Application.datasource#">
+			COMMENT ON COLUMN OTRREP.OTR_VER.OTR_OLD_KEY IS 'Previous Encryption/Decrytion Hash Key'
+		</cfquery>
+
+		<!--- Generate New AES Key --->
+		<cfset key = generateSecretKey("AES") />
+		<!--- Insert Version and Key(s) --->
+		<cfquery name="qUpdateOTR_VER" datasource="#Application.datasource#">
+			insert into OTR_VER (otr_ver, otr_key, otr_old_key)
+				values ('2.1', '#key#', '#Application.system_pw_hash#')
+		</cfquery>
+		<!--- Update old Passwords in OTR_DB to use the new KEY --->
+		<cfquery name="qLookupKey" datasource="#Application.datasource#">
+			select rowid, otr_ver, otr_key, otr_old_key
+			  from otr_ver
+			 where otr_ver = '2.1'
+		</cfquery>
+		<cfquery name="qInstances" datasource="#Application.datasource#">
+			select rowid, db_name, system_password
+			  from otr_db
+			  order by db_name
+		</cfquery>
+		<cfloop query="qInstances">
+			<cfset oldPW = decrypt(qInstances.system_password,qLookupKey.otr_old_key) />
+			<cfset newPW = encrypt(oldPW, qLookupKey.otr_key, "AES/CBC/PKCS5Padding", "HEX") />
+			<cfquery name="qUpdateInstancePW" datasource="#Application.datasource#">
+				update otr_db
+				   set system_password = '#newPW#'
+				 where rowid = '#qInstances.rowid#'
+				   and db_name = '#qInstances.db_name#'
+			</cfquery>
+		</cfloop>
+	</cfcatch>
+</cftry>
 <!--- OTR_DB --->
 <cftry>
 	<!--- SYSTEM_USERNAME --->
@@ -274,20 +331,38 @@
 	</cfcatch>
 </cftry>
 
-<!--- OTR_DB_SPACE_REP - Add Index --->
-<cfquery name="qCreateIndexOTR_DB_SPACE_REP" datasource="#Application.datasource#">
-	CREATE INDEX "OTRREP"."OTR_DB_SPACE_REP_IX" 
-		ON "OTRREP"."OTR_DB_SPACE_REP" 
-		("REP_DATE" DESC , "DB_NAME", "DB_TBS_NAME") 
-		TABLESPACE "OTR_REP_INDX" LOGGING
+<!--- Check if Index exists --->
+<cfquery name="qCheckIx01" datasource="#Application.datasource#">
+	select index_name
+	  from user_indexes
+	 where index_name = 'OTR_DB_SPACE_REP_IX'
+	   and table_owner = 'OTRREP'
 </cfquery>
-<!--- OTR_NFS_SPACE_REP - Add Index --->
-<cfquery name="qCreateIndexOTR_NFS_SPACE_REP" datasource="#Application.datasource#">
-	CREATE INDEX "OTRREP"."OTR_NFS_SPACE_REP_IX" 
-		ON "OTRREP"."OTR_NFS_SPACE_REP" 
-		("REP_DATE" DESC , "DB_NAME", "MOUNTPOINT") 
-		TABLESPACE "OTR_REP_INDX" LOGGING
+<cfif qCheckIx01.RecordCount IS 0>
+	<!--- OTR_DB_SPACE_REP - Add Index --->
+	<cfquery name="qCreateIndexOTR_DB_SPACE_REP" datasource="#Application.datasource#">
+		CREATE INDEX "OTRREP"."OTR_DB_SPACE_REP_IX" 
+			ON "OTRREP"."OTR_DB_SPACE_REP" 
+			("REP_DATE" DESC , "DB_NAME", "DB_TBS_NAME") 
+			TABLESPACE "OTR_REP_INDX" LOGGING
+	</cfquery>
+</cfif>
+<!--- Check if Index exists --->
+<cfquery name="qCheckIx02" datasource="#Application.datasource#">
+	select index_name
+	  from user_indexes
+	 where index_name = 'OTR_NFS_SPACE_REP_IX'
+	   and table_owner = 'OTRREP'
 </cfquery>
+<cfif qCheckIx02.RecordCount IS 0>
+	<!--- OTR_NFS_SPACE_REP - Add Index --->
+	<cfquery name="qCreateIndexOTR_NFS_SPACE_REP" datasource="#Application.datasource#">
+		CREATE INDEX "OTRREP"."OTR_NFS_SPACE_REP_IX" 
+			ON "OTRREP"."OTR_NFS_SPACE_REP" 
+			("REP_DATE" DESC , "DB_NAME", "MOUNTPOINT") 
+			TABLESPACE "OTR_REP_INDX" LOGGING
+	</cfquery>
+</cfif>
 <!--- OTR_ASM_SPACE_REP --->
 <cftry>
 	<cfquery name="qCheckOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
@@ -338,13 +413,22 @@
 			 ADD (CONSTRAINT OTR_ASM_SPACE_REP_PK PRIMARY KEY (DB_NAME, DG_NAME, REP_DATE)
 				  USING INDEX TABLESPACE OTR_REP_INDX)
 		</cfquery>
-		<!--- Create Index OTR_ASM_SPACE_REP --->
-		<cfquery name="qCreateIndexOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
-			CREATE INDEX "OTRREP"."OTR_ASM_SPACE_REP_IX" 
-				ON "OTRREP"."OTR_ASM_SPACE_REP" 
-				("REP_DATE" DESC , "DB_NAME", "DG_NAME") 
-				TABLESPACE "OTR_REP_INDX" LOGGING
+		<!--- Check if Index exists --->
+		<cfquery name="qCheckIx03" datasource="#Application.datasource#">
+			select index_name
+			  from user_indexes
+			 where index_name = 'OTR_ASM_SPACE_REP_IX'
+			   and table_owner = 'OTRREP'
 		</cfquery>
+		<cfif qCheckIx03.RecordCount IS 0>
+			<!--- Create Index OTR_ASM_SPACE_REP --->
+			<cfquery name="qCreateIndexOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
+				CREATE INDEX "OTRREP"."OTR_ASM_SPACE_REP_IX" 
+					ON "OTRREP"."OTR_ASM_SPACE_REP" 
+					("REP_DATE" DESC , "DB_NAME", "DG_NAME") 
+					TABLESPACE "OTR_REP_INDX" LOGGING
+			</cfquery>
+		</cfif>
 	</cfcatch>
 </cftry>
 
@@ -575,4 +659,3 @@ CREATE OR REPLACE FORCE VIEW OTRREP.OTR_TBS_SPACE_REP_V as
 <cflocation url="/otr/index.cfm" addtoken="no" />
 </body>
 </html></cfprocessingdirective>
-
