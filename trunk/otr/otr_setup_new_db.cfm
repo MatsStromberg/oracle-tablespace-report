@@ -29,6 +29,7 @@
 	2013.04.15	mst	Created New OTRREP Schema
 	2013.04.17	mst	Getting default SYSTEM Username from Application.cfc
 	2013.04.23	mst	Added new stronger Password decryption
+	2013.04.28	mst	Reorgnized the code
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <!--- Create OTR_VER --->
@@ -49,6 +50,7 @@
 <cfquery name="qCommentOTR_VER03" datasource="#Application.datasource#">
 	COMMENT ON COLUMN OTRREP.OTR_VER.OTR_OLD_KEY IS 'Previous Encryption/Decrytion Hash Key'
 </cfquery>
+
 <!--- Generate New AES Key --->
 <cfset key = generateSecretKey("AES") />
 <!--- Insert Version and Key(s) --->
@@ -108,6 +110,19 @@
 	COMMENT ON COLUMN OTRREP.OTR_DB.DB_BLACKOUT IS 'BLACKOUT = 1, ONLINE = 0'
 </cfquery>
 
+<!--- Create Contraint OTR_DB --->
+<cfquery name="qCreateConstraintOTR_DB" datasource="#Application.datasource#">
+	ALTER TABLE OTR_DB
+	 ADD (CONSTRAINT OTR_DB_PK PRIMARY KEY (DB_NAME)
+	      USING INDEX TABLESPACE OTR_REP_INDX)
+</cfquery>
+
+<!--- Create Check Contraint OTR_DB --->
+<cfquery name="qCreateConstraintCheckOTR_DB" datasource="#Application.datasource#">
+	ALTER TABLE OTR_DB
+	 ADD (CONSTRAINT OTR_DB_DB_ENV_CHK CHECK (DB_ENV IN ('DEE','DSE','INT','SEE','SSE','DEV')))
+</cfquery>
+
 <!--- Create OTR_CUST --->
 <cfquery name="qCreateOTR_CUST" datasource="#Application.datasource#">
 	CREATE TABLE OTR_CUST
@@ -122,6 +137,13 @@
 </cfquery>
 <cfquery name="qCommentOTR_CUST02" datasource="#Application.datasource#">
 	COMMENT ON COLUMN OTRREP.OTR_CUST.CUST_NAME IS 'Company name of the customer'
+</cfquery>
+
+<!--- Create Contraint OTR_CUST --->
+<cfquery name="qCreateConstraintOTR_CUST" datasource="#Application.datasource#">
+	ALTER TABLE OTR_CUST
+	 ADD (CONSTRAINT OTR_CUST_PK PRIMARY KEY (CUST_ID)
+	      USING INDEX TABLESPACE OTR_REP_INDX)
 </cfquery>
 
 <!--- Create OTR_CUST_APPL_TBS --->
@@ -154,6 +176,13 @@
 </cfquery>
 <cfquery name="qCommentOTR_CUST_APPL_TBS06" datasource="#Application.datasource#">
 	COMMENT ON COLUMN OTRREP.OTR_CUST_APPL_TBS.THRESHOLD_CRITICAL IS 'Critical threshold value'
+</cfquery>
+
+<!--- Create Contraint OTR_CUST_APPL_TBS --->
+<cfquery name="qCreateConstraintOTR_CUST_APPL_TBS" datasource="#Application.datasource#">
+	ALTER TABLE OTR_CUST_APPL_TBS
+	 ADD (CONSTRAINT OTR_CUST_APPL_TBS_PK PRIMARY KEY (DB_NAME, DB_TBS_NAME)
+	      USING INDEX TABLESPACE OTR_REP_INDX)
 </cfquery>
 
 <!--- Create OTR_TBS_SETTINGS --->
@@ -191,6 +220,13 @@
 </cfquery>
 <cfquery name="qCommentOTR_TBS_SETTINGS07" datasource="#Application.datasource#">
 	COMMENT ON COLUMN OTRREP.OTR_TBS_SETTINGS.DB_TBS_CAN_GROW_INC2_MB IS 'Can Grow To Increment (2) for a Datafile (MB)'
+</cfquery>
+
+<!--- Create Contraint OTR_TBS_SETTINGS --->
+<cfquery name="qCreateConstraintOTR_TBS_SETTINGS" datasource="#Application.datasource#">
+	ALTER TABLE OTR_TBS_SETTINGS
+	 ADD (CONSTRAINT OTR_TBS_SETTINGS_PK PRIMARY KEY (DB_NAME, DB_TBS_NAME)
+		  USING INDEX TABLESPACE OTR_REP_INDX)
 </cfquery>
 
 <!--- Create OTR_DB_SPACE_REP --->
@@ -232,6 +268,20 @@
 </cfquery>
 <cfquery name="qCommentOTR_DB_SPACE_REP09" datasource="#Application.datasource#">
 	COMMENT ON COLUMN OTRREP.OTR_DB_SPACE_REP.DB_TBS_REAL_PRC_USED IS 'Tablespace with autoextent Used (in Procent) computed'
+</cfquery>
+
+<!--- Create Contraint OTR_DB_SPACE_REP --->
+<cfquery name="qCreateConstraintOTR_DB_SPACE_REP" datasource="#Application.datasource#">
+	ALTER TABLE OTR_DB_SPACE_REP
+	 ADD (CONSTRAINT OTR_DB_SPACE_REP_PK PRIMARY KEY (DB_NAME, DB_TBS_NAME, REP_DATE)
+	      USING INDEX TABLESPACE OTR_REP_INDX)
+</cfquery>
+<!--- Create Index OTR_DB_SPACE_REP --->
+<cfquery name="qCreateIndexOTR_DB_SPACE_REP" datasource="#Application.datasource#">
+	CREATE INDEX "OTRREP"."OTR_DB_SPACE_REP_IX" 
+		ON "OTRREP"."OTR_DB_SPACE_REP" 
+		("REP_DATE" DESC , "DB_NAME", "DB_TBS_NAME") 
+		TABLESPACE "OTR_REP_INDX" LOGGING
 </cfquery>
 
 <!--- Create OTR_NFS_SPACE_REP --->
@@ -279,6 +329,20 @@
 	COMMENT ON COLUMN OTRREP.OTR_NFS_SPACE_REP.NFS_PRC_USED IS 'NFS Available Space  (in Procent) computed'
 </cfquery>
 
+<!--- Create Contraint OTR_NFS_SPACE_REP --->
+<cfquery name="qCreateConstraintOTR_NFS_SPACE_REP" datasource="#Application.datasource#">
+	ALTER TABLE OTR_NFS_SPACE_REP
+	 ADD (CONSTRAINT OTR_NFS_SPACE_REP_PK PRIMARY KEY (DB_NAME, MOUNTPOINT, REP_DATE)
+	      USING INDEX TABLESPACE OTR_REP_INDX)
+</cfquery>
+<!--- Create Index OTR_NFS_SPACE_REP --->
+<cfquery name="qCreateIndexOTR_NFS_SPACE_REP" datasource="#Application.datasource#">
+	CREATE INDEX "OTRREP"."OTR_NFS_SPACE_REP_IX" 
+		ON "OTRREP"."OTR_NFS_SPACE_REP" 
+		("REP_DATE" DESC , "DB_NAME", "MOUNTPOINT") 
+		TABLESPACE "OTR_REP_INDX" LOGGING
+</cfquery>
+
 <!--- Create OTR_ASM_SPACE_REP --->
 <cfquery name="qCreateOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
 	CREATE TABLE OTR_ASM_SPACE_REP
@@ -314,6 +378,20 @@
 </cfquery>
 <cfquery name="qCommentOTR_ASM_SPACE_REP08" datasource="#Application.datasource#">
 	COMMENT ON COLUMN OTRREP.OTR_ASM_SPACE_REP.ASM_PRC_USED IS 'ASM Available Space (in Procent) computed'
+</cfquery>
+
+<!--- Create Contraint OTR_ASM_SPACE_REP --->
+<cfquery name="qCreateConstraintOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
+	ALTER TABLE OTR_ASM_SPACE_REP
+	 ADD (CONSTRAINT OTR_ASM_SPACE_REP_PK PRIMARY KEY (REP_DATE DESC, DB_NAME, DG_NAME)
+	      USING INDEX TABLESPACE OTR_REP_INDX)
+</cfquery>
+<!--- Create Index OTR_ASM_SPACE_REP --->
+<cfquery name="qCreateIndexOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
+	CREATE INDEX "OTRREP"."OTR_ASM_SPACE_REP_IX" 
+		ON "OTRREP"."OTR_ASM_SPACE_REP" 
+		("REP_DATE" DESC , "DB_NAME", "DG_NAME") 
+		TABLESPACE "OTR_REP_INDX" LOGGING
 </cfquery>
 
 <!--- Create OTR_TBS_ALERTS --->
@@ -368,87 +446,11 @@
 	COMMENT ON COLUMN OTRREP.OTR_TBS_ALERTS.PRC IS 'Tablespace with autoextent Used (in Procent) computed'
 </cfquery>
 
-<!--- Create Contraint OTR_DB --->
-<cfquery name="qCreateConstraintOTR_DB" datasource="#Application.datasource#">
-	ALTER TABLE OTR_DB
-	 ADD (CONSTRAINT OTR_DB_PK PRIMARY KEY (DB_NAME)
-	      USING INDEX TABLESPACE OTR_REP_INDX)
-</cfquery>
-
-<!--- Create Contraint OTR_CUST --->
-<cfquery name="qCreateConstraintOTR_CUST" datasource="#Application.datasource#">
-	ALTER TABLE OTR_CUST
-	 ADD (CONSTRAINT OTR_CUST_PK PRIMARY KEY (CUST_ID)
-	      USING INDEX TABLESPACE OTR_REP_INDX)
-</cfquery>
-
-<!--- Create Contraint OTR_CUST_APPL_TBS --->
-<cfquery name="qCreateConstraintOTR_CUST_APPL_TBS" datasource="#Application.datasource#">
-	ALTER TABLE OTR_CUST_APPL_TBS
-	 ADD (CONSTRAINT OTR_CUST_APPL_TBS_PK PRIMARY KEY (DB_NAME, DB_TBS_NAME)
-	      USING INDEX TABLESPACE OTR_REP_INDX)
-</cfquery>
-
 <!--- Create Contraint OTR_TBS_ALERTS --->
 <cfquery name="qCreateConstraintOTR_TBS_ALERTS" datasource="#Application.datasource#">
 	ALTER TABLE OTR_TBS_ALERTS
 	 ADD (CONSTRAINT OTR_TBS_ALERTS_PK PRIMARY KEY (REP_DATE, MSG_TYPE, DB_NAME, DB_TBS_NAME)
 		  USING INDEX TABLESPACE OTR_REP_INDX)
-</cfquery>
-
-<!--- Create Contraint OTR_TBS_SETTINGS --->
-<cfquery name="qCreateConstraintOTR_TBS_SETTINGS" datasource="#Application.datasource#">
-	ALTER TABLE OTR_TBS_SETTINGS
-	 ADD (CONSTRAINT OTR_TBS_SETTINGS_PK PRIMARY KEY (DB_NAME, DB_TBS_NAME)
-		  USING INDEX TABLESPACE OTR_REP_INDX)
-</cfquery>
-
-<!--- Create Contraint OTR_DB_SPACE_REP --->
-<cfquery name="qCreateConstraintOTR_DB_SPACE_REP" datasource="#Application.datasource#">
-	ALTER TABLE OTR_DB_SPACE_REP
-	 ADD (CONSTRAINT OTR_DB_SPACE_REP_PK PRIMARY KEY (DB_NAME, DB_TBS_NAME, REP_DATE)
-	      USING INDEX TABLESPACE OTR_REP_INDX)
-</cfquery>
-<!--- Create Index OTR_DB_SPACE_REP --->
-<cfquery name="qCreateIndexOTR_DB_SPACE_REP" datasource="#Application.datasource#">
-	CREATE INDEX "OTRREP"."OTR_DB_SPACE_REP_IX" 
-		ON "OTRREP"."OTR_DB_SPACE_REP" 
-		("REP_DATE" DESC , "DB_NAME", "DB_TBS_NAME") 
-		TABLESPACE "OTR_REP_INDX" LOGGING
-</cfquery>
-
-<!--- Create Contraint OTR_NFS_SPACE_REP --->
-<cfquery name="qCreateConstraintOTR_NFS_SPACE_REP" datasource="#Application.datasource#">
-	ALTER TABLE OTR_NFS_SPACE_REP
-	 ADD (CONSTRAINT OTR_NFS_SPACE_REP_PK PRIMARY KEY (DB_NAME, MOUNTPOINT, REP_DATE)
-	      USING INDEX TABLESPACE OTR_REP_INDX)
-</cfquery>
-<!--- Create Index OTR_NFS_SPACE_REP --->
-<cfquery name="qCreateIndexOTR_NFS_SPACE_REP" datasource="#Application.datasource#">
-	CREATE INDEX "OTRREP"."OTR_NFS_SPACE_REP_IX" 
-		ON "OTRREP"."OTR_NFS_SPACE_REP" 
-		("REP_DATE" DESC , "DB_NAME", "MOUNTPOINT") 
-		TABLESPACE "OTR_REP_INDX" LOGGING
-</cfquery>
-
-<!--- Create Contraint OTR_ASM_SPACE_REP --->
-<cfquery name="qCreateConstraintOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
-	ALTER TABLE OTR_ASM_SPACE_REP
-	 ADD (CONSTRAINT OTR_ASM_SPACE_REP_PK PRIMARY KEY (REP_DATE DESC, DB_NAME, DG_NAME)
-	      USING INDEX TABLESPACE OTR_REP_INDX)
-</cfquery>
-<!--- Create Index OTR_ASM_SPACE_REP --->
-<cfquery name="qCreateIndexOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
-	CREATE INDEX "OTRREP"."OTR_ASM_SPACE_REP_IX" 
-		ON "OTRREP"."OTR_ASM_SPACE_REP" 
-		("REP_DATE" DESC , "DB_NAME", "DG_NAME") 
-		TABLESPACE "OTR_REP_INDX" LOGGING
-</cfquery>
-
-<!--- Create Check Contraint OTR_DB --->
-<cfquery name="qCreateConstraintCheckOTR_DB" datasource="#Application.datasource#">
-	ALTER TABLE OTR_DB
-	 ADD (CONSTRAINT OTR_DB_DB_ENV_CHK CHECK (DB_ENV IN ('DEE','DSE','INT','SEE','SSE','DEV')))
 </cfquery>
 
 <!--- Create View Contraint OTR_CUST_APPL_DB_V --->
