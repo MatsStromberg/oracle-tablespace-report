@@ -28,6 +28,7 @@
 	Long over due Change Log
 	2013.04.18	mst	Created DB upgrade template for Release 2.1
 	2013.04.23	mst	Added new stronger Password decryption
+	2013.04.28	mst	Updating system_username for all records
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <cfset bDropDirectory = 0 />
@@ -87,6 +88,7 @@
 		</cfloop>
 	</cfcatch>
 </cftry>
+
 <!--- OTR_DB --->
 <cftry>
 	<!--- SYSTEM_USERNAME --->
@@ -100,6 +102,12 @@
 		</cfquery>
 		<cfquery name="qCommentOTR_DB_COL01" datasource="#Application.datasource#">
 			COMMENT ON COLUMN OTRREP.OTR_DB.SYSTEM_USERNAME IS 'Username for user SYSTEM'
+		</cfquery>
+		<!--- Update All Records --->
+		<cfquery name="qUpdateOTR_DB_SystemUserName" datasource="#Application.datasource#">
+			update otr_db
+			   set system_username = '#Application.default_system_username#'
+			 where system_username = ''
 		</cfquery>
 	</cfcatch>
 </cftry>
