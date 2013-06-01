@@ -28,7 +28,10 @@
 	Long over due Change Log
 	2012.05.20	mst	Delete of commented out code.
 	2013.04.17	mst	Added SYSTEM Username
+	2013.05.31	mst	Missed using the HashKey
 --->
+<!--- Get the HashKey --->
+<cfset sHashKey = Trim(Application.pw_hash.lookupKey()) />
 
 <!--- Pickup Thresholds from Target DB's --->
 <cfquery name="qInstances" datasource="#Application.datasource#">
@@ -42,11 +45,11 @@
 		<cfoutput>#qInstances.db_name#</cfoutput><br />
 
 		<!--- Decrypt the SYSTEM Password --->
-		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(qInstances.system_password)) />
+		<cfset sPassword = Trim(Application.pw_hash.decryptOraPW(Trim(qInstances.system_password), Trim(sHashKey))) />
 		<!--- Create Temporary Data Source --->
 		<cfset s = StructNew() />
 		<cfif qInstances.db_rac IS 1>
-                        <cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qInstances.db_host)#:#qInstances.db_port#/#UCase(qInstances.db_servicename)#" />
+			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qInstances.db_host)#:#qInstances.db_port#/#UCase(qInstances.db_servicename)#" />
 		<cfelse>
 			<cfset s.hoststring   = "jdbc:oracle:thin:@#LCase(qInstances.db_host)#:#qInstances.db_port#:#UCase(qInstances.db_name)#" />
 		</cfif>
