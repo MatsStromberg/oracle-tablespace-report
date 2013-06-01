@@ -30,6 +30,7 @@
 	2013.04.17	mst	Getting default SYSTEM Username from Application.cfc
 	2013.04.23	mst	Added new stronger Password decryption
 	2013.04.28	mst	Reorgnized the code
+	2013.05.31	mst	Error in defining the OTR_ASM_SPACE_REP_PK
 --->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><cfprocessingdirective suppresswhitespace="Yes"><cfsetting enablecfoutputonly="true">
 <!--- Create OTR_VER --->
@@ -383,7 +384,7 @@
 <!--- Create Contraint OTR_ASM_SPACE_REP --->
 <cfquery name="qCreateConstraintOTR_ASM_SPACE_REP" datasource="#Application.datasource#">
 	ALTER TABLE OTR_ASM_SPACE_REP
-	 ADD (CONSTRAINT OTR_ASM_SPACE_REP_PK PRIMARY KEY (REP_DATE DESC, DB_NAME, DG_NAME)
+	 ADD (CONSTRAINT OTR_ASM_SPACE_REP_PK PRIMARY KEY (REP_DATE, DB_NAME, DG_NAME)
 	      USING INDEX TABLESPACE OTR_REP_INDX)
 </cfquery>
 <!--- Create Index OTR_ASM_SPACE_REP --->
