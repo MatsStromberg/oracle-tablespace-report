@@ -24,7 +24,7 @@
     along with the Oracle Tablespace Report.  If not, see 
     <http://www.gnu.org/licenses/>.
 --->
-<!--- 
+<!---
 	Long over due Change Log
 	2012.05.20	mst	Delete snapshot of Instances not in Blackout.
 	2012.05.23	mst	Fixed the delete statement that was messed up!!!
@@ -80,7 +80,7 @@
 				<cfset iPort = qInstances.db_port />
 			</cfif>
 
-			<cfif Trim(qInstances.db_host) IS "" >
+			<cfif Trim(qInstances.db_host) IS "">
 				<!--- Get Host server from EM --->
 				<cfquery name="qHost" datasource="OTR_SYSMAN">
 					select distinct b.property_value
@@ -269,7 +269,7 @@
 
 			<!--- If Temporary Datasource exists... Delete it --->
 			<cfif DataSourceIsValid("#UCase(qInstances.db_name)#temp")>
-				<cfset DataSourceDelete( "#UCase(qInstances.db_name)#temp" ) />
+				<cfset DataSourceDelete("#UCase(qInstances.db_name)#temp") />
 			</cfif>
 
 			<cfcatch type="Database">
