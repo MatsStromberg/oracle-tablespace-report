@@ -1,0 +1,46 @@
+# Introduction #
+
+Oracle Tablespace Report is used to gather various statistics e.g. tablespace usage (allocated, used and free) space. The statistics are stored centrally in the OTR Repository located in an OTR Instance.
+
+This project got started out of a work from a Danish friend, Lars-Bo Vanting, at the time we worked together at T-Systems Schweiz AG back in 2005.
+
+Initially it was only based on Tables, Views and PL/SQL. The current version has expanded on the basis and added a web GUI (based on the excellent open source project Open BlueDragon (http://www.openbd.org).
+
+This version of OTR does a bit more than just collect tablespace usage on a weekly basis. It monitors each database instance every 5 minutes and reports back if a tablespace is getting full and one can directly act on the upcoming problem, extend an tablespace or add a new tablespace file without the need to do this over the Enterprise Manager or manually.
+
+## What does it look like? ##
+
+We’re assuming the OTRREP schema and its objects have been created on the OTR Repository database. Instances has been defined and the relationship between Customers, Instances and Tablespaces has been created.
+
+### Main Screen ###
+![http://www.network23.net/otr/images/wiki/main.png](http://www.network23.net/otr/images/wiki/main.png)
+
+From here we will administrate our Customers, the Database Instances and the relationship of Customer/Database instance(s) and the Tablespaces used.
+
+From here one will generate reports of space usage at a defined point in time. This can be a report containing database instances for all customers or for a single customer. Reports can be stored as Excel files or as PDF files.
+
+On the right side is the monitoring/alert pane where Instances with some sort of problem coming up will be listed. It will display if the Instance is down or if a Tablespace has a problem. With a mouse-over on a red alert the actual tablespace will be shown and how much free space in MB is still available and the “real” % used. With “real” means it’s calculating the free space in % based on the “can grow to” value for the tablespace.
+
+With a click on the red TBS alert, you get the possibility to adjust the tablespace with just one click.
+
+### Tablespace Issues ###
+
+Assuming we have a space problem on a BIGFILE tablespace.
+![http://www.network23.net/otr/images/wiki/tbs-adjustment-bigfile.png](http://www.network23.net/otr/images/wiki/tbs-adjustment-bigfile.png)
+
+With just one click this tablespace will extend the “Can Grow to” with another 2GB.
+
+If it would be a non-BIGFILE tablespace…
+![http://www.network23.net/otr/images/wiki/tbs-adjustment-no-bigfile.png](http://www.network23.net/otr/images/wiki/tbs-adjustment-no-bigfile.png)
+
+A list of the files within this tablespace, that have autoextend still on, will be displayed. You can select to increase the “Can grow to” on one of these datafiles or add a new 2GB file which will have its initial size set to 100MB and the “Can grow to” to 2GB.
+
+### Tablespace Usage Reports ###
+![http://www.network23.net/otr/images/wiki/tablespace_report_output.png](http://www.network23.net/otr/images/wiki/tablespace_report_output.png)
+
+Givs a detailed report of the tablespaces for each Instance / Customer.
+
+### Tablespace Growth Trends ###
+![http://www.network23.net/otr/images/wiki/tablespace-trends.png](http://www.network23.net/otr/images/wiki/tablespace-trends.png)
+
+Gives a graphical output showing the growth of tablespaces over a period. This can help to plan the physical storage needs.
